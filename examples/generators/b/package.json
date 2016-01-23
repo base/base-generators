@@ -2,6 +2,11 @@
   "name": "bbb",
   "private": true,
   "version": "0.1.0",
-  "files": ["index.js"],
-  "main": "generator.js"
+  "files": [
+    "index.js"
+  ],
+  "main": "generator.js",
+  "dependencies": {
+    "base-data": "^0.3.6"
+  }
 }
