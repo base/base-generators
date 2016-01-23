@@ -3,9 +3,9 @@
 require('mocha');
 var path = require('path');
 var assert = require('assert');
-var Base = require('base');
 var gm = require('global-modules');
 var generators = require('..');
+var Base = require('base');
 var base;
 
 var fixtures = path.resolve.bind(path, __dirname, 'fixtures/generators');
@@ -25,7 +25,7 @@ describe('.resolve', function() {
   describe('local', function() {
     it('should resolve a local generator path', function() {
       var fp = base.resolve(fixtures('a'));
-      assert(typeof fp === 'string');
+      assert.equal(typeof fp, 'string');
     });
     
     it('should resolve a generator path from a cwd', function() {
@@ -38,7 +38,7 @@ describe('.resolve', function() {
 
     it('should resolve the path to a local config file', function() {
       var fp = base.resolve('a', fixtures());
-      assert(typeof fp === 'string');
+      assert.equal(typeof fp, 'string');
     });
   });
 
@@ -63,9 +63,9 @@ describe('.resolve', function() {
       assert.equal(typeof fp, 'undefined');
     });
 
-    it('should return null when a generator is not found at the given cwd', function() {
+    it('should return undefined when a generator is not found at the given cwd', function() {
       var actual = base.resolve('node', fixtures());
-      assert.equal(actual, null);
+      assert.equal(typeof actual, 'undefined');
     });
   });
 });
