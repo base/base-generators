@@ -1,0 +1,12 @@
+{
+  "name": "generator-a",
+  "private": true,
+  "version": "0.1.0",
+  "files": [
+    "index.js"
+  ],
+  "main": "generator.js",
+  "dependencies": {
+    "base-config": "^0.3.6"
+  }
+}
