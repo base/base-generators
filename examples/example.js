@@ -3,11 +3,24 @@
 var path = require('path');
 var argv = require('minimist')(process.argv.slice(2));
 var generators = require('..');
+
+/**
+ * Register the `generators` plugin before instantiating `Base`
+ */
+
 var Base = require('base');
 Base.use(generators());
 
+/**
+ * Instantiate
+ */
+
 var app = new Base();
 var cwd = path.resolve.bind(path, __dirname, 'generators');
+
+/**
+ * Register a generator
+ */
 
 app.register('base', function(app) {
   app.extendWith(cwd('f'));
@@ -33,6 +46,10 @@ app.register('base', function(app) {
       });
   });
 });
+
+/**
+ * Generate
+ */
 
 app.generate('base', ['process'], function(err) {
   if (err) throw err;

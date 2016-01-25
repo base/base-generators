@@ -15,46 +15,62 @@ var cache = require('./lib/cache');
 var utils = require('./lib/utils');
 var env = require('./lib/env');
 
+/**
+ * Expose `generators`
+ */
+
 module.exports = function generators(options) {
   return function(app) {
     if (this.isRegistered('base-generators')) return;
+    this.isGenerator = true;
 
     /**
      * Add plugins necessary for running generators.
      * Plugins will only be registered once.
      */
 
-    this.mixin('lazyGenerators', function(app) {
+    this.define('lazyGenerators', function(app) {
       if (!app.hasGenerators) {
         app.define('hasGenerators', true);
+        app.use(env());
         app.use(register(options));
         app.use(utils.option());
         app.use(utils.task());
         app.use(utils.cwd());
         app.use(tasks());
         app.use(cache(options));
-        app.use(env());
       }
     });
 
     /**
      * Invoke generator `name` with the given `fn`.
      *
+     * ```js
+     * base.generate('foo', ['default'] function(err) {
+     *   if (err) throw err;
+     * });
+     * ```
+     * @name .generate
+     * @emits `generate` with the generator `name` and the array of `tasks` that are queued to run.
      * @param {String} `name`
      * @param {Function} `fn` Generator function.
      * @return {Object} Returns the instance of Generate for chaining.
      * @api public
      */
 
-    this.mixin('generate', function(name, tasks, cb) {
+    this.define('generate', function(name, tasks, cb) {
       if (typeof tasks === 'function') {
         cb = tasks;
       }
+
       var res = this.getTasks(name, tasks);
-      if (typeof res.generator === 'undefined') {
+      if (!res.generator || typeof res.generator.env === 'undefined') {
+        if (this.tasks[name]) return this.build(name, cb);
         throw new Error('cannot find generator or task: ' + name);
       }
+
       debug('running tasks %s', res.tasks.join(', '));
+      this.emit('generate', res.generator.env.alias, res.tasks);
       return res.generator.build(res.tasks, cb);
     });
 
@@ -68,12 +84,13 @@ module.exports = function generators(options) {
      * // get a sub-generator
      * app.getGenerator('foo.bar.baz');
      * ```
+     * @name .getGenerator
      * @param {String} `name` Generator name.
      * @return {Object|undefined} Returns the generator or undefined.
      * @api public
      */
 
-    this.mixin('getGenerator', function(name) {
+    this.define('getGenerator', function(name) {
       debug('getting generator: %s', name);
       if (name.charAt(0) === '.') {
         name = path.resolve(name);
@@ -99,13 +116,20 @@ module.exports = function generators(options) {
      * Get generator `name`, or register generator `name` with the
      * given `fn`.
      *
+     * ```js
+     * base.generator('foo', function(app, base) {
+     *   // "app" is a private instance created for the generator
+     *   // "base" is a shared instance
+     * });
+     * ```
+     * @name .generator
      * @param {String} `name`
-     * @param {Function|Object} `fn` Generator function or instance if registering.
-     * @return {Object} Returns the generator instance.
+     * @param {Function|Object} `fn` Generator function or instance. When `fn` is defined, this method is just a proxy for the `.register` method.
+     * @return {Object} Returns the generator instance or undefined if not resolved.
      * @api public
      */
 
-    this.mixin('generator', function(name, fn) {
+    this.define('generator', function(name, fn) {
       if (arguments.length === 1 && typeof name === 'string') {
         var generator = this.getGenerator(name);
         if (generator) return generator;
@@ -117,12 +141,16 @@ module.exports = function generators(options) {
     /**
      * Invoke the given generator in the context of the current instance.
      *
+     * ```js
+     * base.invoke('foo');
+     * ```
+     * @name .invoke
      * @param {String|Object} `app` Generator name or instance.
      * @return {Object} Returns the instance for chaining.
      * @api public
      */
 
-    this.mixin('invoke', function(app) {
+    this.define('invoke', function(app) {
       var generator = app;
       if (typeof app === 'string') {
         app = this.generator(app);
@@ -130,25 +158,48 @@ module.exports = function generators(options) {
       if (typeof app === 'undefined') {
         throw new Error('cannot find generator: ' + generator);
       }
-      if (typeof app.env.fn !== 'function') {
-        throw new Error('expected `env.fn` to be a function');
+
+      var fn = app;
+      if (utils.isObject(app) && app.isGenerator) {
+        fn = app.env.fn;
       }
-      app = app || this;
+
+      if (typeof app === 'function') {
+        app = this;
+      }
+      if (utils.isObject(fn) && app.isGenerator) {
+        return this;
+      }
+
+      if (typeof fn !== 'function') {
+        throw new Error('expected `app.env.fn` to be a function');
+      }
+
       debug('invoking %s', app.env.alias);
-      app.env.fn.call(this, this, this.base);
+      fn.call(this, this, this.base);
       return this;
     });
 
     /**
-     * Extend the current generator instance with all of the
-     * configuration settings from the given generator.
+     * Extend the current generator instance with the settings of other
+     * generators.
      *
+     * ```js
+     * var foo = base.generator('foo');
+     * base.extendWith(foo);
+     * // or
+     * base.extendWith('foo');
+     * // or
+     * base.extendWith(['foo', 'bar', 'baz']);
+     * ```
+     *
+     * @name .extendWith
      * @param {String|Object} `app`
      * @return {Object} Returns the instance for chaining.
      * @api public
      */
 
-    this.mixin('extendWith', function(app) {
+    this.define('extendWith', function(app) {
       if (Array.isArray(app)) {
         return app.forEach(this.extendWith.bind(this));
       }

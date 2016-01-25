@@ -150,4 +150,74 @@ describe('.generate', function() {
       });
     });
   });
+
+  describe('events', function(cb) {
+    it('should emit generate', function(cb) {
+      base.on('generate', function() {
+        cb();
+      });
+
+      base.register('foo', function(app) {
+        app.register('sub', function(sub) {
+          sub.task('default', function(next) {
+            next();
+          });
+
+          sub.task('abc', function(next) {
+            next();
+          });
+        });
+      });
+
+      base.generate('foo.sub', ['abc'], function(err) {
+        if (err) return cb(err);
+      });
+    });
+
+    it('should expose the generator alias as the first parameter', function(cb) {
+      base.on('generate', function(name) {
+        assert.equal(name, 'sub');
+        cb();
+      });
+
+      base.register('foo', function(app) {
+        app.register('sub', function(sub) {
+          sub.task('default', function(next) {
+            next();
+          });
+
+          sub.task('abc', function(next) {
+            next();
+          });
+        });
+      });
+
+      base.generate('foo.sub', ['abc'], function(err) {
+        if (err) return cb(err);
+      });
+    });
+
+    it('should expose the tasks array as the second parameter', function(cb) {
+      base.on('generate', function(name, tasks) {
+        assert.deepEqual(tasks, ['abc']);
+        cb();
+      });
+
+      base.register('foo', function(app) {
+        app.register('sub', function(sub) {
+          sub.task('default', function(next) {
+            next();
+          });
+
+          sub.task('abc', function(next) {
+            next();
+          });
+        });
+      });
+
+      base.generate('foo.sub', ['abc'], function(err) {
+        if (err) return cb(err);
+      });
+    });
+  });
 });

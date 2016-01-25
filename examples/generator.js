@@ -6,5 +6,5 @@ module.exports = function(app) {
 
     console.log('examples');
     cb();
-  })
+  });
 };
