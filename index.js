@@ -32,13 +32,13 @@ module.exports = function generators(options) {
     this.define('lazyGenerators', function(app) {
       if (!app.hasGenerators) {
         app.define('hasGenerators', true);
-        app.use(env());
         app.use(register(options));
         app.use(utils.option());
         app.use(utils.task());
         app.use(utils.cwd());
         app.use(tasks());
         app.use(cache(options));
+        app.use(env());
       }
     });
 
@@ -66,7 +66,10 @@ module.exports = function generators(options) {
       var res = this.getTasks(name, tasks);
       if (!res.generator || typeof res.generator.env === 'undefined') {
         if (this.tasks[name]) return this.build(name, cb);
-        throw new Error('cannot find generator or task: ' + name);
+        var msg = 'cannot find generator or task: "' + name + '"';
+        var cwd = this.option('argv.cwd');
+        if (cwd) msg += ' in "' + cwd + '/' + this.configfile + '"';
+        return cb(new Error(msg));
       }
 
       debug('running tasks %s', res.tasks.join(', '));
@@ -155,6 +158,7 @@ module.exports = function generators(options) {
       if (typeof app === 'string') {
         app = this.generator(app);
       }
+
       if (typeof app === 'undefined') {
         throw new Error('cannot find generator: ' + generator);
       }
@@ -205,6 +209,32 @@ module.exports = function generators(options) {
       }
       this.invoke(app);
       return this;
+    });
+
+    /**
+     * Rename template files
+     */
+
+    this.define('rename', function(dest, name) {
+      if (utils.isObject(dest)) {
+        var opts = dest;
+        dest = opts.dest;
+        name = opts.file || opts.name;
+      }
+
+      return function(file) {
+        file.base = file.dest || dest || this.cwd;
+        file.path = path.resolve(file.base, file.basename);
+
+        if (typeof name === 'string') {
+          file.basename = name;
+
+        } else if (file.basename) {
+          file.basename = file.basename.replace(/^_/, '.');
+          file.basename = file.basename.replace(/^\$/, '');
+        }
+        return file.base;
+      }.bind(this);
     });
 
     // initialize base-generators

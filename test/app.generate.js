@@ -21,6 +21,7 @@ describe('.generate', function() {
           next();
         });
       });
+
       base.generate('foo', function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
