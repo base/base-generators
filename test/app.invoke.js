@@ -35,6 +35,10 @@ describe('.invoke', function() {
   it('should invoke a named generator', function(cb) {
     base.register('foo', function(app) {
       app.invoke('bar');
+
+      assert(app.tasks.hasOwnProperty('a'));
+      assert(app.tasks.hasOwnProperty('b'));
+      assert(app.tasks.hasOwnProperty('c'));
       cb();
     });
 
@@ -47,10 +51,14 @@ describe('.invoke', function() {
     base.getGenerator('foo');
   });
 
-  it('should invoke a generator function from an instance', function(cb) {
+  it('should invoke an instance', function(cb) {
     base.register('foo', function(app) {
       var bar = app.getGenerator('bar');
       app.invoke(bar);
+
+      assert(app.tasks.hasOwnProperty('a'));
+      assert(app.tasks.hasOwnProperty('b'));
+      assert(app.tasks.hasOwnProperty('c'));
       cb();
     });
 
@@ -74,6 +82,74 @@ describe('.invoke', function() {
 
       app.invoke('one');
       app.invoke('two');
+
+      assert(app.tasks.hasOwnProperty('a'));
+      assert(app.tasks.hasOwnProperty('b'));
+      cb();
+    });
+
+    base.getGenerator('foo');
+  });
+
+  it('should invoke sub-generators from sub-generators', function(cb) {
+    base.register('foo', function(app) {
+      app.register('one', function(sub) {
+        sub.register('a', function(a) {
+          a.task('a', function() {});
+        });
+      });
+
+      app.register('two', function(sub) {
+        sub.register('a', function(a) {
+          a.task('b', function() {});
+        });
+      });
+
+      app.invoke('one.a');
+      app.invoke('two.a');
+
+      assert(app.tasks.hasOwnProperty('a'));
+      assert(app.tasks.hasOwnProperty('b'));
+      cb();
+    });
+
+    base.getGenerator('foo');
+  });
+
+  it('should invoke an array of sub-generators from sub-generators', function(cb) {
+    base.register('foo', function(app) {
+      app.register('one', function(sub) {
+        sub.register('a', function(a) {
+          a.task('a', function() {});
+        });
+      });
+
+      app.register('two', function(sub) {
+        sub.register('a', function(a) {
+          a.task('b', function() {});
+        });
+      });
+
+      app.invoke(['one.a', 'two.a']);
+
+      assert(app.tasks.hasOwnProperty('a'));
+      assert(app.tasks.hasOwnProperty('b'));
+      cb();
+    });
+
+    base.getGenerator('foo');
+  });
+
+  it('should invoke an array of sub-generators', function(cb) {
+    base.register('foo', function(app) {
+      app.register('one', function(app) {
+        app.task('a', function() {});
+      });
+      app.register('two', function(app) {
+        app.task('b', function() {});
+      });
+
+      app.invoke(['one', 'two']);
 
       assert(app.tasks.hasOwnProperty('a'));
       assert(app.tasks.hasOwnProperty('b'));

@@ -65,6 +65,51 @@ describe('.generate', function() {
       });
     });
 
+    it('should run a task instead of a generator of the same name', function(cb) {
+      base.register('foo', function(app) {
+        app.task('default', function() {
+          cb(new Error('expected the task to run first'));
+        });
+      });
+      
+      base.task('foo', function() {
+        cb();
+      });
+
+      base.generate('foo', function(err) {
+        assert(!err);
+      });
+    });
+
+    it('should run a task on a generator with the same name when specified', function(cb) {
+      base.register('foo', function(app) {
+        app.task('default', function() {
+          cb();
+        });
+      });
+      
+      base.task('foo', function() {
+        cb(new Error('expected the generator to run'));
+      });
+
+      base.generate('foo:default', function(err) {
+        assert(!err);
+      });
+    });
+
+    it('should run the default task on a generator', function(cb) {
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          next();
+        });
+      });
+
+      base.generate('foo', function(err) {
+        assert(!err);
+        cb();
+      });
+    });
+
     it('should run an array of tasks on the instance', function(cb) {
       var count = 0;
       base.task('a', function(next) {
