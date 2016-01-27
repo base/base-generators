@@ -1,6 +1,6 @@
 {
   "name": "base-generators",
-  "description": "Base plugin for adding adding project-generator methods and properties to base application.",
+  "description": "Add 'project generator' support to your `base` application.",
   "version": "0.1.0",
   "homepage": "https://github.com/jonschlinkert/base-generators",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
@@ -20,33 +20,61 @@
     "test": "mocha"
   },
   "dependencies": {
-    "base-options": "^0.5.5",
-    "base-tasks": "^0.1.3",
+    "async": "^1.5.2",
+    "base-cwd": "^0.1.1",
+    "base-tasks": "^0.2.0",
     "debug": "^2.2.0",
     "extend-shallow": "^2.0.1",
     "global-modules": "^0.2.0",
     "is-absolute": "^0.2.3",
     "kind-of": "^3.0.2",
     "lazy-cache": "^1.0.3",
+    "resolve": "^1.1.7",
     "try-open": "^0.1.0"
   },
   "devDependencies": {
-    "base": "^0.6.4",
+    "base": "^0.6.7",
+    "base-options": "^0.5.5",
+    "base-tasks": "^0.1.4",
+    "composer-runtimes": "^0.7.0",
+    "generate-foo": "^0.1.1",
     "gulp": "^3.9.0",
     "gulp-eslint": "^1.1.1",
+    "gulp-format-md": "^0.1.5",
     "gulp-istanbul": "^0.10.3",
     "gulp-mocha": "^2.2.0",
-    "mocha": "*"
+    "minimist": "^1.2.0",
+    "mocha": "*",
+    "spawn-commands": "^0.3.1"
   },
   "lintDeps": {
     "ignore": [
-      "examples"
+      "examples/generators"
     ]
   },
-  "keywords": [],
+  "keywords": [
+    "boilerplate",
+    "generate",
+    "generator",
+    "init",
+    "project",
+    "scaffold",
+    "yeoman",
+    "yo"
+  ],
   "verb": {
     "plugins": [
       "gulp-format-md"
-    ]
+    ],
+    "layout": "default",
+    "related": {
+      "list": [
+        "base",
+        "base-pipeline",
+        "base-plugins",
+        "base-tasks",
+        "base-fs"
+      ]
+    }
   }
 }
