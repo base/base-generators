@@ -1,10 +1,13 @@
 'use strict';
 
 require('mocha');
+var path = require('path');
 var assert = require('assert');
 var Base = require('base');
 var generators = require('..');
 var base;
+
+var fixtures = path.resolve.bind(path, __dirname, 'fixtures');
 
 describe('.generator', function() {
   beforeEach(function() {
@@ -42,7 +45,7 @@ describe('.generator', function() {
     });
   });
 
-  describe('generators', function(cb) {
+  describe('generators', function() {
     it('should invoke a registered generator when `getGenerator` is called', function(cb) {
       base.register('foo', function(app) {
         app.task('default', function() {});
@@ -78,7 +81,7 @@ describe('.generator', function() {
     });
   });
 
-  describe('cross-generators', function(cb) {
+  describe('cross-generators', function() {
     it('should get a generator from another generator', function(cb) {
       base.register('foo', function(app, b) {
         var bar = b.getGenerator('bar');
@@ -92,7 +95,30 @@ describe('.generator', function() {
     });
   });
 
-  describe('tasks', function(cb) {
+  describe('generators > filepath', function() {
+    it('should register a generator function from a file path', function() {
+      var one = base.generator('one', fixtures('one/generator.js'));
+      assert(base.generators.hasOwnProperty('one'));
+      assert(typeof base.generators.one === 'object');
+      assert.deepEqual(base.generators.one, one);
+    });
+
+    it('should register a Generate instance from a file path', function() {
+      var two = base.generator('two', fixtures('two/generate.js'));
+      assert(base.generators.hasOwnProperty('two'));
+      assert(typeof base.generators.two === 'object');
+      assert.deepEqual(base.generators.two, two);
+    });
+
+    it('should get a registered generator by name', function() {
+      var one = base.generator('one', fixtures('one/generator.js'));
+      var two = base.generator('two', fixtures('two/generate.js'));
+      assert.deepEqual(base.generator('one'), one);
+      assert.deepEqual(base.generator('two'), two);
+    });
+  });
+
+  describe('tasks', function() {
     it('should expose a generator\'s tasks on app.tasks', function(cb) {
       base.register('foo', function(app) {
         app.task('a', function() {});
@@ -118,17 +144,6 @@ describe('.generator', function() {
         app.task('aaa', function() {});
       });
       base.getGenerator('foo');
-    });
-  });
-
-  describe('alias', function() {
-    it('should use a custom function to create the alias', function() {
-      base.option('alias', function(name) {
-        return name.slice(name.lastIndexOf('-') + 1);
-      });
-
-      base.generator('base-abc-xyz', function() {});
-      assert(base.generators.hasOwnProperty('xyz'));
     });
   });
 });

@@ -16,7 +16,7 @@ describe('.register', function() {
   });
   
   describe('function', function() {
-    it('should get a generator that was registered as a function', function() {
+    it('should get a generator registered as a function', function() {
       base.register('foo', function() {});
       var foo = base.getGenerator('foo');
       assert(foo);
@@ -35,7 +35,7 @@ describe('.register', function() {
 
     it('should get a sub-generator from a generator registered as a function', function() {
       base.register('foo', function(foo) {
-        base.register('bar', function(bar) {});
+        foo.register('bar', function(bar) {});
       });
       var bar = base.getGenerator('foo.bar');
       assert(bar);
@@ -44,7 +44,7 @@ describe('.register', function() {
 
     it('should get a sub-generator from a generator registered as a function', function() {
       base.register('foo', function(foo) {
-        base.register('bar', function(bar) {
+        foo.register('bar', function(bar) {
           bar.task('something', function() {});
         });
       });
@@ -52,6 +52,58 @@ describe('.register', function() {
       assert(bar);
       assert(bar.tasks);
       assert(bar.tasks.hasOwnProperty('something'));
+    });
+
+    it('should get a deeply-nested sub-generator registered as a function', function() {
+      base.register('foo', function(foo) {
+        foo.register('bar', function(bar) {
+          bar.register('baz', function(baz) {
+            baz.register('qux', function(qux) {
+              qux.task('qux-one', function() {});
+            });
+          });
+        });
+      });
+
+      var qux = base.getGenerator('foo.bar.baz.qux');
+      assert(qux);
+      assert(qux.tasks);
+      assert(qux.tasks.hasOwnProperty('qux-one'));
+    });
+
+    it('should expose the instance from each generator', function() {
+      base.register('foo', function(foo) {
+        foo.register('bar', function(bar) {
+          bar.register('baz', function(baz) {
+            baz.register('qux', function(qux) {
+              qux.task('qux-one', function() {});
+            });
+          });
+        });
+      });
+
+      var qux = base
+        .getGenerator('foo')
+        .getGenerator('bar')
+        .getGenerator('baz')
+        .getGenerator('qux')
+
+      assert(qux);
+      assert(qux.tasks);
+      assert(qux.tasks.hasOwnProperty('qux-one'));
+    });
+
+    it('should fail when the wrong generator name is given', function() {
+      base.register('foo', function(foo) {
+        foo.register('bar', function(bar) {
+          bar.register('baz', function(baz) {
+            baz.register('qux', function(qux) {
+            });
+          });
+        });
+      });
+      var fez = base.getGenerator('foo.bar.fez');
+      assert.equal(typeof fez, 'undefined');
     });
 
     it('should expose the `base` instance as the second param', function(cb) {
@@ -77,7 +129,18 @@ describe('.register', function() {
     });
   });
   
-  describe('path', function() {
+  describe('alias', function() {
+    it('should create an alias by stripping everything up to the first dash', function() {
+      base.register('foo-bar-baz', function() {});
+      base.register('a-b-c', function() {});
+      base.register('x-y', function() {});
+      base.register('z', function() {});
+      assert(base.generators.hasOwnProperty('bar-baz'));
+      assert(base.generators.hasOwnProperty('b-c'));
+      assert(base.generators.hasOwnProperty('y'));
+      assert(base.generators.hasOwnProperty('z'));
+    });
+
     it('should use a custom function to create the alias', function() {
       base.option('alias', function(name) {
         return name.slice(name.lastIndexOf('-') + 1);
@@ -86,7 +149,9 @@ describe('.register', function() {
       base.register('base-abc-xyz', function() {});
       assert(base.generators.hasOwnProperty('xyz'));
     });
+  });
 
+  describe('path', function() {
     it('should get a generator that was registered by path', function() {
       base.register('a', fixtures('generators/a'));
       var generator = base.getGenerator('a');

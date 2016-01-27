@@ -6,7 +6,7 @@ var Base = require('base');
 var generators = require('..');
 var base;
 
-describe('.invoke', function() {
+describe('.extendWith', function() {
   beforeEach(function() {
     Base.use(generators());
     base = new Base();
