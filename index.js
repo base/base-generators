@@ -30,16 +30,13 @@ module.exports = function generators(options) {
      */
 
     this.define('lazyGenerators', function(app) {
-      if (!app.hasGenerators) {
-        app.define('hasGenerators', true);
-        app.use(register(options));
-        app.use(utils.option());
-        app.use(utils.task());
-        app.use(utils.cwd());
-        app.use(tasks());
-        app.use(cache(options));
-        app.use(env());
-      }
+      app.use(register(options));
+      app.use(utils.option());
+      app.use(utils.task());
+      app.use(utils.cwd());
+      app.use(tasks());
+      app.use(cache(options));
+      app.use(env());
     });
 
     /**
@@ -59,13 +56,20 @@ module.exports = function generators(options) {
      */
 
     this.define('generate', function(name, tasks, cb) {
+      if (typeof name === 'function') {
+        return this.generate('default', ['default'], name);
+      }
+
       if (typeof tasks === 'function') {
         cb = tasks;
+        tasks = null;
       }
 
       var res = this.getTasks(name, tasks);
       if (!res.generator || typeof res.generator.env === 'undefined') {
-        if (this.tasks[name]) return this.build(name, cb);
+        if (this.tasks[name] || this.tasks[res.tasks[0]]) {
+          return this.build(res.tasks, cb);
+        }
         var msg = 'cannot find generator or task: "' + name + '"';
         var cwd = this.option('argv.cwd');
         if (cwd) msg += ' in "' + cwd + '/' + this.configfile + '"';
@@ -95,10 +99,6 @@ module.exports = function generators(options) {
 
     this.define('getGenerator', function(name) {
       debug('getting generator: %s', name);
-      if (name.charAt(0) === '.') {
-        name = path.resolve(name);
-      }
-
       var fn = this.alias.bind(this);
       var names = name.split('.');
       var app = this;
@@ -154,33 +154,11 @@ module.exports = function generators(options) {
      */
 
     this.define('invoke', function(app) {
-      var generator = app;
       if (typeof app === 'string') {
         app = this.generator(app);
       }
-
-      if (typeof app === 'undefined') {
-        throw new Error('cannot find generator: ' + generator);
-      }
-
-      var fn = app;
-      if (utils.isObject(app) && app.isGenerator) {
-        fn = app.env.fn;
-      }
-
-      if (typeof app === 'function') {
-        app = this;
-      }
-      if (utils.isObject(fn) && app.isGenerator) {
-        return this;
-      }
-
-      if (typeof fn !== 'function') {
-        throw new Error('expected `app.env.fn` to be a function');
-      }
-
       debug('invoking %s', app.env.alias);
-      fn.call(this, this, this.base);
+      app.env.fn.call(this, this, this.base);
       return this;
     });
 
@@ -209,32 +187,6 @@ module.exports = function generators(options) {
       }
       this.invoke(app);
       return this;
-    });
-
-    /**
-     * Rename template files
-     */
-
-    this.define('rename', function(dest, name) {
-      if (utils.isObject(dest)) {
-        var opts = dest;
-        dest = opts.dest;
-        name = opts.file || opts.name;
-      }
-
-      return function(file) {
-        file.base = file.dest || dest || this.cwd;
-        file.path = path.resolve(file.base, file.basename);
-
-        if (typeof name === 'string') {
-          file.basename = name;
-
-        } else if (file.basename) {
-          file.basename = file.basename.replace(/^_/, '.');
-          file.basename = file.basename.replace(/^\$/, '');
-        }
-        return file.base;
-      }.bind(this);
     });
 
     // initialize base-generators
