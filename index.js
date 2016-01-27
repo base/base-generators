@@ -121,6 +121,7 @@ module.exports = function generators(options) {
       debug('getting generator: "%s"', name);
 
       var fn = this.alias.bind(this);
+
       var names = name.split('.');
       var app = this;
 
@@ -149,6 +150,9 @@ module.exports = function generators(options) {
      */
 
     this.define('invoke', function(app) {
+      if (Array.isArray(app)) {
+        return app.forEach(this.invoke.bind(this));
+      }
       if (typeof app === 'string') {
         app = this.generator(app);
       }
@@ -156,7 +160,7 @@ module.exports = function generators(options) {
     });
 
     /**
-     * Extend the current generator instance with the settings of other
+     * Alias for `.invoke`, Extend the current generator instance with the settings of other
      * generators.
      *
      * ```js
@@ -175,9 +179,6 @@ module.exports = function generators(options) {
      */
 
     this.define('extendWith', function(app) {
-      if (Array.isArray(app)) {
-        return app.forEach(this.extendWith.bind(this));
-      }
       this.invoke(app);
       return this;
     });
