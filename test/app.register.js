@@ -4,17 +4,61 @@ require('mocha');
 var path = require('path');
 var assert = require('assert');
 var Base = require('base');
+var option = require('base-options');
+var register = require('../lib/register');
 var generators = require('..');
 var base;
 
 var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 
+describe('.register plugin', function() {
+  it('should register as a plugin', function() {
+    var base = new Base();
+    base.use(register());
+    assert(base.registered.hasOwnProperty('base-generators-register'));
+  });
+
+  it('should only register as a plugin once', function(cb) {
+    base = new Base();
+    base.registered = {};
+
+    var count = 0;
+    base.on('plugin', function() {
+      count++;
+    });
+
+    base.use(register());
+    base.use(register());
+    base.use(register());
+    base.use(register());
+    base.use(register());
+    assert.equal(count, 1);
+    cb();
+  });
+});
+
 describe('.register', function() {
   beforeEach(function() {
     Base.use(generators());
     base = new Base();
+    base.use(option());
   });
-  
+
+  describe('properties', function() {
+    it('should expose a configfile getter/setter', function() {
+      assert.equal(typeof base.configfile, 'string');
+    });
+
+    it('should set configfile to generator.js by default', function() {
+      assert.equal(base.configfile, 'generator.js');
+    });
+
+    it('should set configfile', function() {
+      base.configfile = 'foo.js';
+      assert.equal(base.configfile, 'foo.js');
+    });
+  });
+
   describe('function', function() {
     it('should get a generator registered as a function', function() {
       base.register('foo', function() {});
@@ -86,7 +130,7 @@ describe('.register', function() {
         .getGenerator('foo')
         .getGenerator('bar')
         .getGenerator('baz')
-        .getGenerator('qux')
+        .getGenerator('qux');
 
       assert(qux);
       assert(qux.tasks);
@@ -152,14 +196,6 @@ describe('.register', function() {
   });
 
   describe('path', function() {
-    it('should get a generator that was registered by path', function() {
-      base.register('a', fixtures('generators/a'));
-      var generator = base.getGenerator('a');
-      assert(generator);
-      assert(generator.tasks);
-      assert(generator.tasks.hasOwnProperty('default'));
-    });
-
     it('should register a generator function by name', function() {
       base.register('foo', function() {});
       assert(base.generators.hasOwnProperty('foo'));
@@ -170,7 +206,7 @@ describe('.register', function() {
       assert(base.generators.hasOwnProperty('abc'));
     });
 
-    it('should register a generator by path', function() {
+    it('should register a generator by dirname', function() {
       base.register('a', fixtures('generators/a'));
       assert(base.generators.hasOwnProperty('a'));
     });
@@ -178,6 +214,16 @@ describe('.register', function() {
     it('should register a generator from a configfile filepath', function() {
       base.register('base-abc', fixtures('generators/a/generator.js'));
       assert(base.generators.hasOwnProperty('abc'));
+    });
+
+    it('should throw when a generator does not expose the instance', function(cb) {
+      try {
+        base.register('not-exposed', require(fixtures('not-exposed.js')));
+        cb(new Error('expected an error'));
+      } catch (err) {
+        assert.equal(err.message, 'generator instances must be exposed with module.exports');
+        cb();
+      }
     });
   });
 

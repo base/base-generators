@@ -4,6 +4,7 @@ require('mocha');
 var path = require('path');
 var assert = require('assert');
 var Base = require('base');
+var option = require('base-options');
 var generators = require('..');
 var base;
 
@@ -12,6 +13,7 @@ var fixtures = path.resolve.bind(path, __dirname, 'fixtures');
 describe('.generator', function() {
   beforeEach(function() {
     Base.use(generators());
+    Base.use(option());
     base = new Base();
   });
   
@@ -92,6 +94,24 @@ describe('.generator', function() {
       base.register('bar', function(app, base) {});
       base.register('baz', function(app, base) {});
       base.getGenerator('foo');
+    });
+
+    it('should set options on another generator instance', function(cb) {
+      base.generator('foo', function(app) {
+        app.task('default', function(next) {
+          assert.equal(app.option('abc'), 'xyz');
+          next();
+        });
+      });
+
+      base.generator('bar', function(app, b) {
+        var foo = b.getGenerator('foo');
+        foo.option('abc', 'xyz');
+        foo.build(function(err) {
+          if (err) return cb(err);
+          cb();
+        });
+      });
     });
   });
 

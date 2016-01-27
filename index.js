@@ -7,7 +7,7 @@
 
 'use strict';
 
-var path = require('path');
+var async = require('async');
 var debug = require('debug')('base:generators');
 var register = require('./lib/register');
 var tasks = require('./lib/tasks');
@@ -29,95 +29,24 @@ module.exports = function generators(options) {
      * Plugins will only be registered once.
      */
 
-    this.define('lazyGenerators', function(app) {
-      app.use(register(options));
-      app.use(utils.option());
-      app.use(utils.task());
-      app.use(utils.cwd());
-      app.use(tasks());
-      app.use(cache(options));
-      app.use(env());
+    this.define('initGenerators', function() {
+      this.set('env.alias', 'base');
+      if (typeof this.task !== 'function') {
+        this.use(utils.task());
+      }
+      this.use(register(options));
+      this.use(utils.cwd());
+      this.use(tasks());
+      this.use(cache(options));
+      this.use(env());
     });
 
     /**
-     * Invoke generator `name` with the given `fn`.
-     *
-     * ```js
-     * base.generate('foo', ['default'] function(err) {
-     *   if (err) throw err;
-     * });
-     * ```
-     * @name .generate
-     * @emits `generate` with the generator `name` and the array of `tasks` that are queued to run.
-     * @param {String} `name`
-     * @param {Function} `fn` Generator function.
-     * @return {Object} Returns the instance of Generate for chaining.
-     * @api public
-     */
-
-    this.define('generate', function(name, tasks, cb) {
-      if (typeof name === 'function') {
-        return this.generate('default', ['default'], name);
-      }
-
-      if (typeof tasks === 'function') {
-        cb = tasks;
-        tasks = null;
-      }
-
-      var res = this.getTasks(name, tasks);
-      if (!res.generator || typeof res.generator.env === 'undefined') {
-        if (this.tasks[name] || this.tasks[res.tasks[0]]) {
-          return this.build(res.tasks, cb);
-        }
-        var msg = 'cannot find generator or task: "' + name + '"';
-        var cwd = this.option('argv.cwd');
-        if (cwd) msg += ' in "' + cwd + '/' + this.configfile + '"';
-        return cb(new Error(msg));
-      }
-
-      debug('running tasks %s', res.tasks.join(', '));
-      this.emit('generate', res.generator.env.alias, res.tasks);
-      return res.generator.build(res.tasks, cb);
-    });
-
-    /**
-     * Get generator `name` from `app.generators`. Dot-notation
-     * may be used to get a sub-generator.
-     *
-     * ```js
-     * app.getGenerator('foo');
-     *
-     * // get a sub-generator
-     * app.getGenerator('foo.bar.baz');
-     * ```
-     * @name .getGenerator
-     * @param {String} `name` Generator name.
-     * @return {Object|undefined} Returns the generator or undefined.
-     * @api public
-     */
-
-    this.define('getGenerator', function(name) {
-      debug('getting generator: %s', name);
-      var fn = this.alias.bind(this);
-      var names = name.split('.');
-      var app = this;
-
-      while ((name = names.shift())) {
-        app = app.generators.get(name, fn);
-
-        // if generator was not found, try again with `base`
-        if (typeof app === 'undefined') {
-          app = this.base.generators.get(name);
-          break;
-        }
-      }
-      return app;
-    });
-
-    /**
-     * Get generator `name`, or register generator `name` with the
-     * given `fn`.
+     * Register generator `name` with the given `fn`, or get generator `name`
+     * if only one argument is passed. This method calls the `.getGenerator` method
+     * but goes one step further: if `name` is not already registered, it will try
+     * to resolve and register the generator before returning it (or `undefined`
+     * if unsuccessful).
      *
      * ```js
      * base.generator('foo', function(app, base) {
@@ -133,12 +62,78 @@ module.exports = function generators(options) {
      */
 
     this.define('generator', function(name, fn) {
+      debug('generator: "%s"', name);
+      this.emit('generator', name);
+
       if (arguments.length === 1 && typeof name === 'string') {
         var generator = this.getGenerator(name);
         if (generator) return generator;
       }
+
       this.register(name, fn);
       return this.getGenerator(name);
+    });
+
+    /**
+     * Return true if the given `name` exists on the `generators`
+     * object. Dot-notation may be used to check for sub-generators.
+     *
+     * ```js
+     * base.register('foo', function(app) {
+     *   app.register('bar', function() {});
+     * });
+     *
+     * base.hasGenerator('foo');
+     * //=> true
+     * base.hasGenerator('bar');
+     * //=> false
+     * base.hasGenerator('foo.bar');
+     * //=> true
+     * ```
+     *
+     * @name .hasGenerator
+     * @param {String} `name`
+     * @return {Boolean} Returns true if the generator exists.
+     * @api public
+     */
+
+    this.define('hasGenerator', function(name) {
+      return this.has(utils.toGeneratorPath(name));
+    });
+
+    /**
+     * Get generator `name` from `app.generators`. Dot-notation
+     * may be used to get a sub-generator.
+     *
+     * ```js
+     * var foo = app.getGenerator('foo');
+     *
+     * // get a sub-generator
+     * var baz = app.getGenerator('foo.bar.baz');
+     * ```
+     * @name .getGenerator
+     * @param {String} `name` Generator name.
+     * @return {Object|undefined} Returns the generator instance or undefined.
+     * @api public
+     */
+
+    this.define('getGenerator', function(name) {
+      debug('getting generator: "%s"', name);
+
+      var fn = this.alias.bind(this);
+      var names = name.split('.');
+      var app = this;
+
+      while ((name = names.shift())) {
+        app = app.generators.get(name, fn);
+
+        // if generator was not found, try again with `base`
+        if (typeof app === 'undefined') {
+          app = this.base.generators.get(name);
+          if (!app) break;
+        }
+      }
+      return app;
     });
 
     /**
@@ -157,9 +152,7 @@ module.exports = function generators(options) {
       if (typeof app === 'string') {
         app = this.generator(app);
       }
-      debug('invoking %s', app.env.alias);
-      app.env.fn.call(this, this, this.base);
-      return this;
+      return utils.invoke(app, this);
     });
 
     /**
@@ -189,7 +182,116 @@ module.exports = function generators(options) {
       return this;
     });
 
+    /**
+     * Run a `generator` and `tasks`, calling the given `callback` function
+     * upon completion.
+     *
+     * ```js
+     * // run tasks `bar` and `baz` on generator `foo`
+     * base.generate('foo', ['bar', 'baz'], function(err) {
+     *   if (err) throw err;
+     * });
+     *
+     * // or use shorthand
+     * base.generate('foo:bar,baz', function(err) {
+     *   if (err) throw err;
+     * });
+     *
+     * // run the `default` task on generator `foo`
+     * base.generate('foo', function(err) {
+     *   if (err) throw err;
+     * });
+     *
+     * // run the `default` task on the `default` generator, if defined
+     * base.generate(function(err) {
+     *   if (err) throw err;
+     * });
+     * ```
+     * @name .generate
+     * @emits `generate` with the generator `name` and the array of `tasks` that are queued to run.
+     * @param {String} `name`
+     * @param {String|Array} `tasks`
+     * @param {Function} `cb` Callback function that exposes `err` as the only parameter.
+     * @api public
+     */
+
+    this.define('generate', function(name, tasks, cb) {
+      var args = [].slice.call(arguments);
+      cb = args.pop();
+
+      var res = this.resolveTasks.apply(this, args);
+      debug('generating: "%s"', res.tasks.join(', '));
+      this.emit('generate', res.generator.env.alias, res.tasks);
+
+      res.generator.build(res.tasks, function(err) {
+        if (err) {
+          generatorError(err, this, name, cb);
+          return;
+        }
+        cb();
+      }.bind(this));
+    });
+
+    /**
+     * Iterate over an array of generators and tasks, calling [generate](#generate)
+     * on each.
+     *
+     * ```js
+     * // run tasks `a` and `b` on generator `foo`,
+     * // and tasks `c` and `d` on generator `bar`
+     * base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
+     *   if (err) throw err;
+     * });
+     * ```
+     * @name .generateEach
+     * @param {String|Array} `tasks` Array of generators and tasks to run.
+     * @param {Function} `cb` Callback function that exposes `err` as the only parameter.
+     * @api public
+     */
+
+    this.define('generateEach', function(tasks, cb) {
+      if (typeof tasks === 'function') {
+        return this.generateEach('default', tasks);
+      }
+
+      async.each(utils.arrayify(tasks), function(task, next) {
+        var args = task.split(':').concat(next);
+        app.generate.apply(app, args);
+      }, cb);
+    });
+
+    /**
+     * Create a generator alias from the given `name`.
+     *
+     * @name .alias
+     * @param {String} `name`
+     * @param {Object} `options`
+     * @return {String} Returns the alias.
+     * @api public
+     */
+
+    app.define('alias', function(name, options) {
+      debug('creating alias for: "%s"', name);
+      var opts = utils.extend({}, this.options, options);
+      return utils.toAlias(name, opts);
+    });
+
     // initialize base-generators
-    this.lazyGenerators(this);
+    this.initGenerators();
   };
 };
+
+/**
+ * Handle generator errors
+ */
+
+function generatorError(err, app, name, cb) {
+  if (!/Invalid/.test(err.message)) {
+    return cb(err);
+  }
+
+  var msg = 'Cannot find generator or task: "' + name + '"';
+  var cwd = app.get('options.argv.cwd');
+  if (cwd) msg += ' in "' + cwd + '/' + app.configfile + '"';
+  return cb(new Error(msg));
+}

@@ -6,6 +6,8 @@ var Base = require('base');
 var generators = require('..');
 var base;
 
+var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
+
 describe('.generator', function() {
   beforeEach(function() {
     Base.use(generators());
@@ -46,5 +48,13 @@ describe('.generator', function() {
     assert(generator);
     assert.equal(typeof generator, 'object');
     assert.equal(generator.name, 'mno');
+  });
+
+  it('should get a generator that was registered by path', function() {
+    base.register('a', fixtures('generators/a'));
+    var generator = base.getGenerator('a');
+    assert(generator);
+    assert(generator.tasks);
+    assert(generator.tasks.hasOwnProperty('default'));
   });
 });

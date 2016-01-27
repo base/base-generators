@@ -16,7 +16,7 @@ describe('.generate', function() {
   
   describe('generators', function(cb) {
     it('should throw an error when a generator is not found', function(cb) {
-      base.generate('fdsslsllsfjssl', function(err) {
+      base.generateEach('fdsslsllsfjssl', function(err) {
         assert(err);
         assert.equal('Cannot find generator or task: "fdsslsllsfjssl"', err.message);
         cb();
@@ -26,28 +26,16 @@ describe('.generate', function() {
     // special case
     it('should throw an error when a generator is not found in argv.cwd', function(cb) {
       base.option('argv.cwd', 'foo/bar/baz');
-      base.generate('sflsjljskksl', function(err) {
+      base.generateEach('sflsjljskksl', function(err) {
         assert(err);
         assert.equal('Cannot find generator or task: "sflsjljskksl" in "foo/bar/baz/generator.js"', err.message);
         cb();
       });
     });
 
-    it('should not reformat error messages that are not about invalid tasks', function(cb) {
-      base.task('default', function(cb) {
-        cb(new Error('whatever'));
-      });
-
-      base.generate('default', function(err) {
-        assert(err);
-        assert.equal(err.message, 'whatever');
-        cb();
-      });
-    });
-
     it('should throw an error when a task is not found', function(cb) {
       base.register('fdsslsllsfjssl', function() {});
-      base.generate('fdsslsllsfjssl', ['foo'], function(err) {
+      base.generateEach('fdsslsllsfjssl:foo', function(err) {
         assert(err);
         assert.equal('Cannot find generator or task: "fdsslsllsfjssl"', err.message);
         cb();
@@ -59,7 +47,7 @@ describe('.generate', function() {
         next();
       });
 
-      base.generate('foo', function(err) {
+      base.generateEach('foo', function(err) {
         assert(!err);
         cb();
       });
@@ -80,25 +68,10 @@ describe('.generate', function() {
         next();
       });
 
-      base.generate('a,b,c', function(err) {
+      base.generateEach('a,b,c', function(err) {
+        if (err) return cb(err);
         assert.equal(count, 3);
         assert(!err);
-        cb();
-      });
-    });
-
-    it('should run the default task on the default generator', function(cb) {
-      var count = 0;
-      base.register('default', function(app) {
-        app.task('default', function(next) {
-          count++;
-          next();
-        });
-      });
-
-      base.generate(function(err) {
-        if (err) return cb(err);
-        assert.equal(count, 1);
         cb();
       });
     });
@@ -112,7 +85,46 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo', function(err) {
+      base.generateEach('foo', function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run an array of generators', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.register('bar', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generateEach(['foo', 'bar'], function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 2);
+        cb();
+      });
+    });
+
+    it('should run the default task on the default generator', function(cb) {
+      var count = 0;
+      base.register('default', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generateEach(function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
         cb();
@@ -133,7 +145,7 @@ describe('.generate', function() {
         });
       });
       
-      base.generate('foo', ['abc'], function(err) {
+      base.generateEach('foo:abc', function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
         cb();
@@ -164,7 +176,7 @@ describe('.generate', function() {
         });
       });
       
-      base.generate('foo', 'a,b,c', function(err) {
+      base.generateEach('foo:a,b,c', function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
         cb();
@@ -189,7 +201,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', function(err) {
+      base.generateEach('foo.sub', function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
         cb();
@@ -212,7 +224,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', ['abc'], function(err) {
+      base.generateEach('foo.sub:abc', function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
         cb();
@@ -245,7 +257,7 @@ describe('.generate', function() {
         });
       });
       
-      base.generate('foo.bar', ['a', 'b', 'c'], function(err) {
+      base.generateEach('foo.bar:a,b,c', function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
         cb();
@@ -278,9 +290,33 @@ describe('.generate', function() {
         });
       });
       
-      base.generate('foo.bar', 'a,b,c', function(err) {
+      base.register('qux', function(app) {
+        app.register('fez', function(fez) {
+          fez.task('default', function(next) {
+            count++;
+            next();
+          });
+
+          fez.task('a', function(next) {
+            count++;
+            next();
+          });
+
+          fez.task('b', function(next) {
+            count++;
+            next();
+          });
+
+          fez.task('c', function(next) {
+            count++;
+            next();
+          });
+        });
+      });
+      
+      base.generateEach(['foo.bar:a,b,c', 'qux.fez:a,b,c'], function(err) {
         if (err) return cb(err);
-        assert.equal(count, 3);
+        assert.equal(count, 6);
         cb();
       });
     });
@@ -294,7 +330,7 @@ describe('.generate', function() {
         app.register('sub', function(sub) {
           sub.task('default', function(next) {
             res += 'foo > sub > default ';
-            base.generate('bar.sub', next);
+            base.generateEach('bar.sub', next);
           });
         });
       });
@@ -308,7 +344,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', function(err) {
+      base.generateEach('foo.sub', function(err) {
         if (err) return cb(err);
         assert.equal(res, 'foo > sub > default bar > sub > default ');
         cb();
@@ -331,7 +367,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', ['abc'], function(err) {
+      base.generateEach('foo.sub:abc', function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
         cb();
@@ -357,7 +393,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', ['abc'], function(err) {
+      base.generateEach('foo.sub:abc', function(err) {
         if (err) return cb(err);
       });
     });
@@ -380,7 +416,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', ['abc'], function(err) {
+      base.generateEach('foo.sub:abc', function(err) {
         if (err) return cb(err);
       });
     });
@@ -403,7 +439,7 @@ describe('.generate', function() {
         });
       });
 
-      base.generate('foo.sub', ['abc'], function(err) {
+      base.generateEach('foo.sub:abc', function(err) {
         if (err) return cb(err);
       });
     });
