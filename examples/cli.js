@@ -11,9 +11,9 @@ var file = argv.file ? require(argv.file) : require('./generator');
 
 var base = new Base();
 base.register('base', file);
-var app = base.getGenerator('base');
 
-app.generateEach(argv._, function(err) {
-  if (err) throw err;
-  console.log('done!');
-});
+base.getGenerator('base')
+  .generateEach(argv._, function(err) {
+    if (err) throw err;
+    console.log('done!');
+  });

@@ -1,8 +1,5 @@
 'use strict';
 
-require('time-require');
-
-var time = require('time-diff')();
 var runtimes = require('composer-runtimes');
 var task = require('base-tasks');
 var Base = require('base');

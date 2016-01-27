@@ -41,6 +41,7 @@ app.register('example', function(app) {
       .cli.process(argv, function(err) {
         if (err) return cb(err);
 
+        console.log('example > process');
         app.generator(cwd('a'))
           .config.process({zzz: 'zzz', bar: 'bar'}, cb);
       });
@@ -57,7 +58,7 @@ app.register('example', function(app) {
  */
 
 app.task('default', function(cb) {
-  console.log('foo > default');
+  console.log(this.app.name + ' > ' + this.name);
   app.generate('example', ['process'], function(err) {
     if (err) return cb(err);
     console.log('example > process');

@@ -2,7 +2,7 @@
 
 
 module.exports = function(app) {
-  app.register('foo', require('./generators/instance'));
+  app.register('baz', require('./generators/instance'));
 
   app.task('default', function(cb) {
     console.log('base > default');
