@@ -22,6 +22,45 @@ describe('.generator', function() {
     assert.equal(generator.name, 'abc');
   });
 
+  it('should get a generator from the base instance from a nested generator', function() {
+    base.register('abc', function() {});
+    base.register('xyz', function(app) {
+      app.register('sub', function(sub) {
+        var generator = base.getGenerator('abc');
+        assert(generator);
+        assert.equal(typeof generator, 'object');
+        assert.equal(generator.name, 'abc');
+      });
+    });
+    base.getGenerator('xyz');
+  });
+
+  it('should get a generator from the base instance using `this`', function() {
+    base.register('abc', function() {});
+    base.register('xyz', function(app) {
+      app.register('sub', function(sub) {
+        var generator = this.getGenerator('abc');
+        assert(generator);
+        assert.equal(typeof generator, 'object');
+        assert.equal(generator.name, 'abc');
+      });
+    });
+    base.getGenerator('xyz');
+  });
+
+  it('should get a base generator from "app" from a nested generator', function() {
+    base.register('abc', function() {});
+    base.register('xyz', function(app) {
+      app.register('sub', function(sub) {
+        var generator = app.getGenerator('abc');
+        assert(generator);
+        assert.equal(typeof generator, 'object');
+        assert.equal(generator.name, 'abc');
+      });
+    });
+    base.getGenerator('xyz');
+  });
+
   it('should get a nested generator', function() {
     base.register('abc', function(abc) {
       abc.register('def', function() {});
