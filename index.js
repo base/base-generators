@@ -251,6 +251,10 @@ module.exports = function generators(options) {
      */
 
     this.define('generateEach', function(tasks, cb) {
+      if (Array.isArray(tasks) && tasks.length === 0) {
+        tasks = ['default'];
+      }
+
       if (typeof tasks === 'function') {
         return this.generateEach('default', tasks);
       }
