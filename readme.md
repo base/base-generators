@@ -5,6 +5,7 @@
 - [Install](#install)
 - [Usage](#usage)
 - [Examples](#examples)
+  * [Tasks](#tasks)
   * [Generators](#generators)
   * [Sub-generators](#sub-generators)
 - [API](#api)
@@ -38,7 +39,7 @@ var base = new Base();
 
 ## Examples
 
-All examples assume the following code is defined first:
+All examples assume the following code is defined:
 
 ```js
 var Base = require('base');
@@ -48,7 +49,7 @@ Base.use(generators());
 var base = new Base();
 ```
 
-### Generators
+### Tasks
 
 **Register a task:**
 
@@ -66,6 +67,8 @@ base.build('default', function(err) {
   if (err) throw err;
 });
 ```
+
+### Generators
 
 **Register a generator:**
 
@@ -512,11 +515,14 @@ it doesn't exist.
 
 You might also be interested in these projects:
 
+* [bach](https://www.npmjs.com/package/bach): Compose your async functions with elegance | [homepage](https://github.com/phated/bach)
 * [base](https://www.npmjs.com/package/base): base is the foundation for creating modular, unit testable and highly pluggable node.js applications, starting… [more](https://www.npmjs.com/package/base) | [homepage](https://github.com/node-base/base)
 * [base-fs](https://www.npmjs.com/package/base-fs): base-methods plugin that adds vinyl-fs methods to your 'base' application for working with the file… [more](https://www.npmjs.com/package/base-fs) | [homepage](https://github.com/jonschlinkert/base-fs)
 * [base-pipeline](https://www.npmjs.com/package/base-pipeline): base-methods plugin that adds pipeline and plugin methods for dynamically composing streaming plugin pipelines. | [homepage](https://github.com/jonschlinkert/base-pipeline)
 * [base-plugins](https://www.npmjs.com/package/base-plugins): Upgrade's plugin support in base-methods to allow plugins to be called any time after init. | [homepage](https://github.com/jonschlinkert/base-plugins)
 * [base-tasks](https://www.npmjs.com/package/base-tasks): base-methods plugin that provides a very thin wrapper around [https://github.com/jonschlinkert/composer](https://github.com/jonschlinkert/composer) for adding task methods to… [more](https://www.npmjs.com/package/base-tasks) | [homepage](https://github.com/jonschlinkert/base-tasks)
+* [composer](https://www.npmjs.com/package/composer): API-first task runner with three methods: task, run and watch. | [homepage](https://github.com/jonschlinkert/composer)
+* [gulp](https://www.npmjs.com/package/gulp): The streaming build system | [homepage](http://gulpjs.com)
 
 ## Running tests
 
