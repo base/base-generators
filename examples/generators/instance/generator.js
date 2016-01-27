@@ -2,7 +2,7 @@
 
 var path = require('path');
 var argv = require('minimist')(process.argv.slice(2));
-var generators = require('..');
+var generators = require('../../..');
 
 /**
  * Register the `generators` plugin before instantiating `Base`
@@ -16,13 +16,13 @@ Base.use(generators());
  */
 
 var app = new Base();
-var cwd = path.resolve.bind(path, __dirname, 'generators');
+var cwd = path.resolve.bind(path, __dirname, '../../generators');
 
 /**
  * Register a generator
  */
 
-app.register('base', function(app) {
+app.register('example', function(app) {
   app.extendWith(cwd('f'));
   app.extendWith(cwd('e'));
 
@@ -45,13 +45,24 @@ app.register('base', function(app) {
           .config.process({zzz: 'zzz', bar: 'bar'}, cb);
       });
   });
+
+  app.task('default', function(cb) {
+    console.log('example > default');
+    cb();
+  });
 });
 
 /**
  * Generate
  */
 
-app.generate('base', ['process'], function(err) {
-  if (err) throw err;
-  console.log('done');
+app.task('default', function(cb) {
+  console.log('foo > default');
+  app.generate('example', ['process'], function(err) {
+    if (err) return cb(err);
+    console.log('example > process');
+    cb();
+  });
 });
+
+module.exports = app;

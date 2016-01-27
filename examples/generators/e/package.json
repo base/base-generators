@@ -2,6 +2,6 @@
   "name": "generator-e",
   "private": true,
   "version": "0.1.0",
-  "files": ["index.js"],
+  "files": ["generator.js"],
   "main": "generator.js"
 }
