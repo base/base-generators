@@ -1,6 +1,6 @@
 {
   "name": "base-generators",
-  "description": "Add 'project generator' support to your `base` application.",
+  "description": "Adds project-generator support to your `base` application.",
   "version": "0.1.0",
   "homepage": "https://github.com/jonschlinkert/base-generators",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
@@ -24,20 +24,15 @@
     "base-cwd": "^0.1.1",
     "base-tasks": "^0.2.0",
     "debug": "^2.2.0",
-    "extend-shallow": "^2.0.1",
+    "generator-util": "^0.1.1",
     "global-modules": "^0.2.0",
-    "is-absolute": "^0.2.3",
-    "kind-of": "^3.0.2",
-    "lazy-cache": "^1.0.3",
-    "resolve": "^1.1.7",
-    "try-open": "^0.1.0"
+    "lazy-cache": "^1.0.3"
   },
   "devDependencies": {
     "base": "^0.6.7",
     "base-options": "^0.5.5",
     "base-tasks": "^0.1.4",
     "composer-runtimes": "^0.7.0",
-    "generate-foo": "^0.1.1",
     "gulp": "^3.9.0",
     "gulp-eslint": "^1.1.1",
     "gulp-format-md": "^0.1.5",
@@ -69,12 +64,20 @@
     "layout": "default",
     "related": {
       "list": [
+        "bach",
         "base",
+        "base-fs",
         "base-pipeline",
         "base-plugins",
         "base-tasks",
-        "base-fs"
+        "composer",
+        "gulp"
       ]
-    }
+    },
+    "reflinks": [
+      "bach",
+      "composer",
+      "gulp"
+    ]
   }
 }
