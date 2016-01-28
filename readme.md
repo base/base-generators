@@ -8,6 +8,7 @@
   * [Tasks](#tasks)
   * [Generators](#generators)
   * [Sub-generators](#sub-generators)
+- [In the wild](#in-the-wild)
 - [API](#api)
 - [Related projects](#related-projects)
 - [Running tests](#running-tests)
@@ -51,6 +52,8 @@ var base = new Base();
 
 ### Tasks
 
+Tasks are exactly the same as [gulp](http://gulpjs.com) tasks, and are powered by [bach](https://github.com/phated/bach) and [composer](https://github.com/jonschlinkert/composer).
+
 **Register a task:**
 
 ```js
@@ -69,6 +72,14 @@ base.build('default', function(err) {
 ```
 
 ### Generators
+
+> I heard you liked tasks, so I put some tasks in your tasks.
+
+**What's a generator?**
+
+Generators are functions that are registered by name, and are used to encapsulate and organize code, [tasks](#tasks), other generators, or [sub-generators](#sub-generators), in a sharable, publishable and easily re-usable way.
+
+In case it helps, here are some [live examples](#in-the-wild).
 
 **Register a generator:**
 
@@ -218,9 +229,18 @@ base.generate('foo.one', ['a', 'b', 'c'], function(err) {
 });
 ```
 
+## In the wild
+
+Checked off as they're added:
+
+* [ ] generate: adds a CLI, template rendering, fs methods and generator convenience-methods to base-generators
+* [ ] assemble: site generation
+* [ ] verb: documentation generation
+* [ ] update: renames generators to "updaters", which are used to keep your project up-to-date
+
 ## API
 
-### [.generator](index.js#L64)
+### [.generator](index.js#L65)
 
 Register generator `name` with the given `fn`, or get generator `name` if only one argument is passed. This method calls the `.getGenerator` method but goes one step further: if `name` is not already registered, it will try to resolve and register the generator before returning it (or `undefined` if unsuccessful).
 
@@ -239,7 +259,7 @@ base.generator('foo', function(app, base) {
 });
 ```
 
-### [.hasGenerator](index.js#L100)
+### [.hasGenerator](index.js#L101)
 
 Return true if the given `name` exists on the `generators` object. Dot-notation may be used to check for sub-generators.
 
@@ -263,7 +283,7 @@ base.hasGenerator('foo.bar');
 //=> true
 ```
 
-### [.getGenerator](index.js#L120)
+### [.getGenerator](index.js#L121)
 
 Get generator `name` from `app.generators`. Dot-notation may be used to get a sub-generator.
 
@@ -281,7 +301,7 @@ var foo = app.getGenerator('foo');
 var baz = app.getGenerator('foo.bar.baz');
 ```
 
-### [.invoke](index.js#L152)
+### [.invoke](index.js#L153)
 
 Invoke the given generator in the context of the current instance.
 
@@ -296,7 +316,7 @@ Invoke the given generator in the context of the current instance.
 base.invoke('foo');
 ```
 
-### [.extendWith](index.js#L181)
+### [.extendWith](index.js#L182)
 
 Alias for `.invoke`, Extend the current generator instance with the settings of other generators.
 
@@ -316,7 +336,7 @@ base.extendWith('foo');
 base.extendWith(['foo', 'bar', 'baz']);
 ```
 
-### [.generate](index.js#L219)
+### [.generate](index.js#L220)
 
 Run a `generator` and `tasks`, calling the given `callback` function upon completion.
 
@@ -354,7 +374,7 @@ base.generate(function(err) {
 });
 ```
 
-### [.generateEach](index.js#L253)
+### [.generateEach](index.js#L254)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -373,7 +393,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.alias](index.js#L278)
+### [.alias](index.js#L279)
 
 Create a generator alias from the given `name`.
 
@@ -425,17 +445,17 @@ app.resolve('generate-foo');
 app.resolve('./a/b/c/');
 ```
 
-### [.configfile](lib/register.js#L79)
+### [.configfile](lib/register.js#L78)
 
 Getter/setter for defining the `configfile` name to use for lookups.
 By default `configfile` is set to `generator.js`.
 
-### [.modulename](lib/register.js#L97)
+### [.modulename](lib/register.js#L96)
 
 Getter/setter for defining the `modulename` name to use for lookups.
 By default `modulename` is set to `generate`.
 
-### [.base](lib/register.js#L124)
+### [.base](lib/register.js#L123)
 
 Getter/setter for the `base` (or shared) instance of `generate`.
 
@@ -451,65 +471,6 @@ app.register('foo', function(app, base) {
   // "base" is a shared instance, also accessible using `app.base`
 });
 ```
-
-### [.isObject](lib/utils.js#L63)
-
-Returns true if a the given `value` is an object.
-
-**Params**
-
-* `value` **{any}**
-* `returns` **{Boolean}**
-
-### [.arrayify](lib/utils.js#L75)
-
-Cast the given `value` to an array.
-
-**Params**
-
-* `value` **{String|Array}**
-* `returns` **{Array}**
-
-### [.toFullname](lib/utils.js#L128)
-
-Create a generator name from the given `alias` and `namespace`.
-
-**Params**
-
-* `alias` **{String}**
-* `namespace` **{String}**
-* `returns` **{String}**
-
-**Example**
-
-```js
-utils.toFullname('foo', 'generate');
-//=> 'generate-foo';
-
-utils.toFullname('generate-bar', 'generate');
-//=> 'generate-bar'
-```
-
-### [.tryResolve](lib/utils.js#L163)
-
-Try to `require.resolve` module `name`, first locally
-then in the globaly npm directory. Fails silently
-if not found.
-
-**Params**
-
-* `name` **{String}**: The name or filepath of the module to resolve
-* `returns` **{String|undefined}**
-
-### [.tryRequire](lib/utils.js#L203)
-
-Try to require the given module, failing silently if
-it doesn't exist.
-
-**Params**
-
-* `name` **{String}**: The module name or file path
-* `returns` **{any|Null}**: Returns the value of requiring the specified module, or `null`
 
 ## Related projects
 
@@ -550,4 +511,4 @@ Released under the MIT license.
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb) on January 27, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb) on January 28, 2016._
