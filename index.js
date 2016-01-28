@@ -8,6 +8,7 @@
 'use strict';
 
 var async = require('async');
+var util = require('generator-util');
 var debug = require('debug')('base:generators');
 var register = require('./lib/register');
 var tasks = require('./lib/tasks');
@@ -98,7 +99,7 @@ module.exports = function generators(options) {
      */
 
     this.define('hasGenerator', function(name) {
-      return this.has(utils.toGeneratorPath(name));
+      return this.has(util.toGeneratorPath(name));
     });
 
     /**
@@ -259,7 +260,7 @@ module.exports = function generators(options) {
         return this.generateEach('default', tasks);
       }
 
-      async.each(utils.arrayify(tasks), function(task, next) {
+      async.each(util.arrayify(tasks), function(task, next) {
         var args = task.split(':').concat(next);
         app.generate.apply(app, args);
       }, cb);
@@ -277,8 +278,8 @@ module.exports = function generators(options) {
 
     app.define('alias', function(name, options) {
       debug('creating alias for: "%s"', name);
-      var opts = utils.extend({}, this.options, options);
-      return utils.toAlias(name, opts);
+      var opts = util.extend({}, this.options, options);
+      return util.toAlias(name, opts);
     });
 
     // initialize base-generators

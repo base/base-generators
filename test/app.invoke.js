@@ -6,7 +6,7 @@ var assert = require('assert');
 var gm = require('global-modules');
 var commands = require('spawn-commands');
 var Base = require('base');
-var utils = require('../lib/utils');
+var utils = require('generator-util');
 var generators = require('..');
 var base;
 

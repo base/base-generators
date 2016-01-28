@@ -44,18 +44,18 @@ describe('.resolve', function() {
 
   describe('global', function() {
     it('should resolve a global generator path', function() {
-      var fp = base.resolve('node', gm);
-      assert.equal(fp, path.resolve(gm, 'generate-node/generator.js'));
+      var fp = base.resolve('bar', gm);
+      assert.equal(fp, path.resolve(gm, 'generate-bar/index.js'));
     });
 
     it('should resolve a global generator path without a cwd', function() {
-      var fp = base.resolve('node');
-      assert.equal(fp, path.resolve(gm, 'generate-node/generator.js'));
+      var fp = base.resolve('bar');
+      assert.equal(fp, path.resolve(gm, 'generate-bar/index.js'));
     });
 
     it('should resolve a global generator by full name', function() {
-      var fp = base.resolve('generate-node');
-      assert.equal(fp, path.resolve(gm, 'generate-node/generator.js'));
+      var fp = base.resolve('generate-bar');
+      assert.equal(fp, path.resolve(gm, 'generate-bar/index.js'));
     });
 
     it('should return undefined when a generator is not found', function() {
@@ -64,7 +64,7 @@ describe('.resolve', function() {
     });
 
     it('should return undefined when a generator is not found at the given cwd', function() {
-      var actual = base.resolve('node', fixtures());
+      var actual = base.resolve('bar', fixtures());
       assert.equal(typeof actual, 'undefined');
     });
   });
