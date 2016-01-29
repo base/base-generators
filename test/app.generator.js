@@ -56,6 +56,53 @@ describe('.generator', function() {
       base.getGenerator('foo');
     });
 
+    it('should expose the generator instance on `app`', function(cb) {
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          assert.equal(app.get('a'), 'b');
+          next();
+        })
+      });
+
+      var foo = base.getGenerator('foo');
+      foo.set('a', 'b');
+      foo.build('default', function(err) {
+        if (err) return cb(err);
+        cb()
+      });
+    });
+
+    it('should expose the "base" instance on `base`', function(cb) {
+      base.set('x', 'z');
+      base.register('foo', function(app, base) {
+        app.task('default', function(next) {
+          assert.equal(base.get('x'), 'z');
+          next();
+        })
+      });
+
+      var foo = base.getGenerator('foo');
+      foo.set('a', 'b');
+      foo.build('default', function(err) {
+        if (err) return cb(err);
+        cb()
+      });
+    });
+
+    it('should expose the "env" object on `env`', function(cb) {
+      base.register('foo', function(app, base, env) {
+        app.task('default', function(next) {
+          assert.equal(env.alias, 'foo');
+          next();
+        })
+      });
+
+      base.getGenerator('foo').build('default', function(err) {
+        if (err) return cb(err);
+        cb()
+      });
+    });
+
     it('should expose an app\'s generators on app.generators', function(cb) {
       base.register('foo', function(app) {
         app.register('a', function() {});

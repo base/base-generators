@@ -18,17 +18,17 @@ describe('.generate', function() {
     it('should throw an error when a generator is not found', function(cb) {
       base.generate('fdsslsllsfjssl', function(err) {
         assert(err);
-        assert.equal('Cannot find generator or task: "fdsslsllsfjssl"', err.message);
+        assert.equal('Cannot find generator: "fdsslsllsfjssl"', err.message);
         cb();
       });
     });
 
     // special case
     it('should throw an error when a generator is not found in argv.cwd', function(cb) {
-      base.option('argv.cwd', 'foo/bar/baz');
+      base.option('cwd', 'foo/bar/baz');
       base.generate('sflsjljskksl', function(err) {
         assert(err);
-        assert.equal('Cannot find generator or task: "sflsjljskksl" in "foo/bar/baz/generator.js"', err.message);
+        assert.equal('Cannot find generator: "sflsjljskksl" in "foo/bar/baz/generator.js"', err.message);
         cb();
       });
     });
@@ -49,7 +49,7 @@ describe('.generate', function() {
       base.register('fdsslsllsfjssl', function() {});
       base.generate('fdsslsllsfjssl', ['foo'], function(err) {
         assert(err);
-        assert.equal('Cannot find generator or task: "fdsslsllsfjssl"', err.message);
+        assert.equal('Cannot find task: "foo" in generator: "fdsslsllsfjssl"', err.message);
         cb();
       });
     });
@@ -110,6 +110,28 @@ describe('.generate', function() {
       });
     });
 
+    // it('should run a stringified array of tasks on the instance', function(cb) {
+    //   var count = 0;
+    //   base.task('a', function(next) {
+    //     count++;
+    //     next();
+    //   });
+    //   base.task('b', function(next) {
+    //     count++;
+    //     next();
+    //   });
+    //   base.task('c', function(next) {
+    //     count++;
+    //     next();
+    //   });
+
+    //   base.generate('a,b,c', function(err) {
+    //     assert.equal(count, 3);
+    //     assert(!err);
+    //     cb();
+    //   });
+    // });
+
     it('should run an array of tasks on the instance', function(cb) {
       var count = 0;
       base.task('a', function(next) {
@@ -125,7 +147,8 @@ describe('.generate', function() {
         next();
       });
 
-      base.generate('a,b,c', function(err) {
+      base.generate(['a', 'b', 'c'], function(err) {
+        if (err) return cb(err);
         assert.equal(count, 3);
         assert(!err);
         cb();

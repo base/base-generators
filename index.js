@@ -63,7 +63,7 @@ module.exports = function generators(options) {
      */
 
     this.define('generator', function(name, fn) {
-      debug('generator: "%s"', name);
+      debug('registering generator: "%s"', name);
       this.emit('generator', name);
 
       if (arguments.length === 1 && typeof name === 'string') {
@@ -122,7 +122,6 @@ module.exports = function generators(options) {
       debug('getting generator: "%s"', name);
 
       var fn = this.alias.bind(this);
-
       var names = name.split('.');
       var app = this;
 
@@ -131,7 +130,7 @@ module.exports = function generators(options) {
 
         // if generator was not found, try again with `base`
         if (typeof app === 'undefined') {
-          app = this.base.generators.get(name);
+          app = this.base.generators.get(name, fn);
           if (!app) break;
         }
       }
@@ -218,6 +217,10 @@ module.exports = function generators(options) {
      */
 
     this.define('generate', function(name, tasks, cb) {
+      if (Array.isArray(name)) {
+        return this.generateEach(name, tasks);
+      }
+
       var args = [].slice.call(arguments);
       cb = args.pop();
 
@@ -262,8 +265,8 @@ module.exports = function generators(options) {
 
       async.each(util.arrayify(tasks), function(task, next) {
         var args = task.split(':').concat(next);
-        app.generate.apply(app, args);
-      }, cb);
+        this.generate.apply(this, args);
+      }.bind(this), cb);
     });
 
     /**
@@ -292,12 +295,28 @@ module.exports = function generators(options) {
  */
 
 function generatorError(err, app, name, cb) {
-  if (!/Invalid/.test(err.message)) {
-    return cb(err);
+  var match = /Invalid task `(.*?)`/.exec(err.message);
+  if (!match) return cb(err);
+
+  var taskName = match[1];
+  if (~name.indexOf(':')) {
+    var segs = name.split(':');
+    taskName = segs[1];
+    name = segs[0];
   }
 
-  var msg = 'Cannot find generator or task: "' + name + '"';
-  var cwd = app.get('options.argv.cwd');
+  var msg = 'Cannot find ';
+  if (app.hasGenerator(name) && name !== taskName) {
+    msg += 'task: "' + taskName + '" in generator';
+  } else if (app.hasGenerator(name)) {
+    msg += 'task';
+  } else {
+    msg += 'generator';
+  }
+
+  msg += ': "' + name + '"';
+
+  var cwd = app.get('options.cwd');
   if (cwd) msg += ' in "' + cwd + '/' + app.configfile + '"';
   return cb(new Error(msg));
 }

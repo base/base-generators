@@ -18,17 +18,17 @@ describe('.generate', function() {
     it('should throw an error when a generator is not found', function(cb) {
       base.generateEach('fdsslsllsfjssl', function(err) {
         assert(err);
-        assert.equal('Cannot find generator or task: "fdsslsllsfjssl"', err.message);
+        assert.equal('Cannot find generator: "fdsslsllsfjssl"', err.message);
         cb();
       });
     });
 
     // special case
     it('should throw an error when a generator is not found in argv.cwd', function(cb) {
-      base.option('argv.cwd', 'foo/bar/baz');
+      base.option('cwd', 'foo/bar/baz');
       base.generateEach('sflsjljskksl', function(err) {
         assert(err);
-        assert.equal('Cannot find generator or task: "sflsjljskksl" in "foo/bar/baz/generator.js"', err.message);
+        assert.equal('Cannot find generator: "sflsjljskksl" in "foo/bar/baz/generator.js"', err.message);
         cb();
       });
     });
@@ -37,7 +37,7 @@ describe('.generate', function() {
       base.register('fdsslsllsfjssl', function() {});
       base.generateEach('fdsslsllsfjssl:foo', function(err) {
         assert(err);
-        assert.equal('Cannot find generator or task: "fdsslsllsfjssl"', err.message);
+        assert.equal('Cannot find task: "foo" in generator: "fdsslsllsfjssl"', err.message);
         cb();
       });
     });
