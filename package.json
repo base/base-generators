@@ -23,7 +23,7 @@
   "dependencies": {
     "async": "^1.5.2",
     "base-cwd": "^0.1.1",
-    "base-tasks": "^0.2.0",
+    "base-tasks": "^0.3.0",
     "debug": "^2.2.0",
     "generator-util": "^0.1.1",
     "global-modules": "^0.2.0",
@@ -34,6 +34,7 @@
     "base-options": "^0.5.5",
     "base-tasks": "^0.1.4",
     "composer-runtimes": "^0.7.0",
+    "generate-foo": "^0.1.1",
     "gulp": "^3.9.0",
     "gulp-eslint": "^1.1.1",
     "gulp-format-md": "^0.1.5",
