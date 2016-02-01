@@ -26,6 +26,7 @@
     "base-tasks": "^0.3.0",
     "debug": "^2.2.0",
     "generator-util": "^0.1.1",
+    "get-value": "^2.0.3",
     "global-modules": "^0.2.0",
     "lazy-cache": "^1.0.3"
   },

@@ -20,7 +20,7 @@ var env = require('./lib/env');
  * Expose `generators`
  */
 
-module.exports = function generators(options) {
+module.exports = function generators(config) {
   return function(app) {
     if (this.isRegistered('base-generators')) return;
     this.isGenerator = true;
@@ -35,10 +35,10 @@ module.exports = function generators(options) {
       if (typeof this.task !== 'function') {
         this.use(utils.task());
       }
-      this.use(register(options));
+      this.use(register(config));
       this.use(utils.cwd());
       this.use(tasks());
-      this.use(cache(options));
+      this.use(cache(config));
       this.use(env());
     });
 
@@ -118,23 +118,47 @@ module.exports = function generators(options) {
      * @api public
      */
 
-    this.define('getGenerator', function(name) {
+    this.define('getGenerator', function(name, fn) {
       debug('getting generator: "%s"', name);
 
-      var fn = this.alias.bind(this);
-      var names = name.split('.');
-      var app = this;
-
-      while ((name = names.shift())) {
-        app = app.generators.get(name, fn);
-
-        // if generator was not found, try again with `base`
-        if (typeof app === 'undefined') {
-          app = this.base.generators.get(name, fn);
-          if (!app) break;
-        }
+      if (typeof fn !== 'function') {
+        fn = this.toAlias.bind(this);
       }
+
+      // var app = this.generators.get(name, fn);
+      // if (app) {
+      // console.log(app)
+      //   return app;
+      // }
+
+      var props = name.split('.');
+      var app = this;
+      var prop;
+
+      while ((prop = props.shift())) {
+        var generator = this.findGenerator(prop, fn);
+        if (!generator) {
+          break;
+        }
+        app = generator;
+        continue;
+      }
+
       return app;
+    });
+
+    this.define('globalGenerator', function(name) {
+      debug('getting global generator: "%s"', name);
+      var filepath = this.resolve(name);
+      if (filepath) {
+        return this.generator(name);
+      }
+    });
+
+    this.define('findGenerator', function(name, fn) {
+      return this.generators.get(name, fn)
+        || this.base.generators.get(name, fn)
+        || this.globalGenerator(name);
     });
 
     /**
@@ -225,6 +249,12 @@ module.exports = function generators(options) {
       cb = args.pop();
 
       var res = this.resolveTasks.apply(this, args);
+      if (res.tasks === null) {
+        debug('no default tasks defined');
+        this.emit('task:skipping');
+        return cb();
+      }
+
       debug('generating: "%s"', res.tasks.join(', '));
       this.emit('generate', res.generator.env.alias, res.tasks);
 
@@ -258,12 +288,10 @@ module.exports = function generators(options) {
       if (Array.isArray(tasks) && tasks.length === 0) {
         tasks = ['default'];
       }
-
       if (typeof tasks === 'function') {
         return this.generateEach('default', tasks);
       }
-
-      async.each(util.arrayify(tasks), function(task, next) {
+      async.eachSeries(util.arrayify(tasks), function(task, next) {
         var args = task.split(':').concat(next);
         this.generate.apply(this, args);
       }.bind(this), cb);
@@ -279,10 +307,26 @@ module.exports = function generators(options) {
      * @api public
      */
 
-    app.define('alias', function(name, options) {
+    app.define('toAlias', function toAlias(name, options) {
       debug('creating alias for: "%s"', name);
-      var opts = util.extend({}, this.options, options);
+      var opts = util.extend({}, config, this.options, options);
       return util.toAlias(name, opts);
+    });
+
+    /**
+     * Create a generator's full name from the given `alias`.
+     *
+     * @name .fullname
+     * @param {String} `alias`
+     * @param {Object} `options`
+     * @return {String} Returns the full name.
+     * @api public
+     */
+
+    app.define('toFullname', function toFullname(alias, options) {
+      debug('creating fullname for: "%s"', alias);
+      var opts = util.extend({prefix: this.modulename}, config, this.options, options);
+      return util.toFullname(alias, opts);
     });
 
     // initialize base-generators
