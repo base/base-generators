@@ -137,7 +137,7 @@ describe('.register', function() {
       assert(qux.tasks.hasOwnProperty('qux-one'));
     });
 
-    it('should fail when the wrong generator name is given', function() {
+    it('should fail when a generator that does not exist is defined', function() {
       base.register('foo', function(foo) {
         foo.register('bar', function(bar) {
           bar.register('baz', function(baz) {
@@ -146,6 +146,7 @@ describe('.register', function() {
           });
         });
       });
+
       var fez = base.getGenerator('foo.bar.fez');
       assert.equal(typeof fez, 'undefined');
     });

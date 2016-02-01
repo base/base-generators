@@ -46,8 +46,18 @@ describe('tasks', function() {
     });
 
     it('should return false if a task does not exist', function() {
-      base.task('foo', function() {});
       assert(!base.hasTask('bar'));
+    });
+  });
+
+  describe('hasGenerator', function() {
+    it('should return true if a task exists', function() {
+      base.generator('foo', function() {});
+      assert(base.hasGenerator('foo'));
+    });
+
+    it('should return false if a task does not exist', function() {
+      assert(!base.hasGenerator('bar'));
     });
   });
 
