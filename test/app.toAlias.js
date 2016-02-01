@@ -6,22 +6,22 @@ var Base = require('base');
 var generators = require('..');
 var base;
 
-describe('.alias', function() {
+describe('.toAlias', function() {
   beforeEach(function() {
     Base.use(generators());
     base = new Base();
   });
 
   it('should create an alias from a name with a dash', function() {
-    assert.equal(base.alias('foo-bar'), 'bar');
+    assert.equal(base.toAlias('foo-bar'), 'bar');
   });
 
   it('should create an alias using the given prefix', function() {
-    assert.equal(base.alias('foo-bar', {prefix: 'f'}), 'oo-bar');
+    assert.equal(base.toAlias('foo-bar', {prefix: 'f'}), 'oo-bar');
   });
 
   it('should create an alias using the given alias function', function() {
-    var alias = base.alias('one-two-three', {
+    var alias = base.toAlias('one-two-three', {
       alias: function(name) {
         return name.slice(name.lastIndexOf('-') + 1);
       }
