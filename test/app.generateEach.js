@@ -3,11 +3,11 @@
 require('mocha');
 var assert = require('assert');
 var Base = require('base');
-var option = require('base-options');
+var option = require('base-option');
 var generators = require('..');
 var base;
 
-describe('.generate', function() {
+describe('.generateEach', function() {
   beforeEach(function() {
     Base.use(generators());
     base = new Base();

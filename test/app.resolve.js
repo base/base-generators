@@ -64,7 +64,7 @@ describe('.resolve', function() {
     });
 
     it('should return undefined when a generator is not found at the given cwd', function() {
-      var actual = base.resolve('bar', fixtures());
+      var actual = base.resolve('bar', {cwd: fixtures()});
       assert.equal(typeof actual, 'undefined');
     });
   });

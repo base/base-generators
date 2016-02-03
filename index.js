@@ -24,6 +24,8 @@ module.exports = function generators(config) {
   return function(app) {
     if (this.isRegistered('base-generators')) return;
     this.isGenerator = true;
+    var globalCache = {};
+    var getCache = {};
 
     /**
      * Add plugins necessary for running generators.
@@ -31,15 +33,15 @@ module.exports = function generators(config) {
      */
 
     this.define('initGenerators', function() {
-      this.set('env.alias', 'base');
+      this.options = utils.extend({}, this.options, config);
+      this.use(utils.cwd());
       if (typeof this.task !== 'function') {
         this.use(utils.task());
       }
-      this.use(register(config));
-      this.use(utils.cwd());
-      this.use(tasks());
-      this.use(cache(config));
-      this.use(env());
+      this.use(tasks(this.options));
+      this.use(register(this.options));
+      this.use(cache(this.options));
+      this.use(env(this.options));
     });
 
     /**
@@ -63,7 +65,7 @@ module.exports = function generators(config) {
      */
 
     this.define('generator', function(name, fn) {
-      debug('registering generator: "%s"', name);
+      debug('registering generator "%s"', name);
       this.emit('generator', name);
 
       if (arguments.length === 1 && typeof name === 'string') {
@@ -119,50 +121,74 @@ module.exports = function generators(config) {
      */
 
     this.define('getGenerator', function(name, fn) {
-      debug('getting generator: "%s"', name);
+      debug('getting generator "%s"', name);
 
       if (typeof fn !== 'function') {
         fn = this.toAlias.bind(this);
       }
 
-      // var app = this.generators.get(name, fn);
-      // if (app) {
-      // console.log(app)
-      //   return app;
-      // }
-
+      if (getCache[name]) return getCache[name];
       var props = name.split('.');
       var app = this;
       var prop;
 
       while ((prop = props.shift())) {
-        var generator = this.findGenerator(prop, fn);
-        if (!generator) {
-          break;
-        }
-        app = generator;
-        continue;
+        app = app.findGenerator(prop, fn);
+        if (!app) break;
       }
 
+      getCache[name] = app;
       return app;
     });
 
+    /**
+     * Search for globally installed generator `name`. If found, then generator
+     * is registered and returned, otherwise `undefined` is returned.
+     *
+     * @name .globalGenerator
+     * @param {String} `name`
+     * @return {Object|undefined}
+     * @api public
+     */
+
     this.define('globalGenerator', function(name) {
-      debug('getting global generator: "%s"', name);
+      debug('getting global generator "%s"', name);
+      if (globalCache[name]) return globalCache[name];
+
       var filepath = this.resolve(name);
       if (filepath) {
-        return this.generator(name);
+        this.register(name, filepath);
+        var generator = this.generators.get(name);
+        if (generator) {
+          globalCache[name] = generator;
+          return generator;
+        }
       }
     });
 
+    /**
+     * Find generator `name`, by first searching the cache,
+     * then searching the cache of the `base` generator,
+     * and last searching for a globally installed generator.
+     *
+     * @name .findGenerator
+     * @param {String} `name`
+     * @param {Function} `fn` Optionally supply a rename function.
+     * @return {Object|undefined} Returns the generator instance if found, or undefined.
+     * @api public
+     */
+
     this.define('findGenerator', function(name, fn) {
+      debug('finding generator "%s"', name);
+
       return this.generators.get(name, fn)
         || this.base.generators.get(name, fn)
         || this.globalGenerator(name);
     });
 
     /**
-     * Invoke the given generator in the context of the current instance.
+     * Invoke the given generator in the context of (`this`) the current
+     * instance.
      *
      * ```js
      * base.invoke('foo');
@@ -180,6 +206,7 @@ module.exports = function generators(config) {
       if (typeof app === 'string') {
         app = this.generator(app);
       }
+      debug('invoking generator "%s"', app.namespace);
       return utils.invoke(app, this);
     });
 
@@ -255,8 +282,10 @@ module.exports = function generators(config) {
         return cb();
       }
 
-      debug('generating: "%s"', res.tasks.join(', '));
-      this.emit('generate', res.generator.env.alias, res.tasks);
+      if (res.generator && res.generator.env) {
+        debug('generating: "%s"', res.tasks.join(', '));
+        this.emit('generate', res.generator.env.alias, res.tasks);
+      }
 
       res.generator.build(res.tasks, function(err) {
         if (err) {
@@ -308,9 +337,10 @@ module.exports = function generators(config) {
      */
 
     app.define('toAlias', function toAlias(name, options) {
-      debug('creating alias for: "%s"', name);
       var opts = util.extend({}, config, this.options, options);
-      return util.toAlias(name, opts);
+      var alias = util.toAlias(name, opts);
+      debug('created alias "%s" for string "%s"', alias, name);
+      return alias;
     });
 
     /**
@@ -324,9 +354,10 @@ module.exports = function generators(config) {
      */
 
     app.define('toFullname', function toFullname(alias, options) {
-      debug('creating fullname for: "%s"', alias);
       var opts = util.extend({prefix: this.modulename}, config, this.options, options);
-      return util.toFullname(alias, opts);
+      var fullname = util.toFullname(alias, opts);
+      debug('created fullname "%s" for alias "%s"', fullname, alias);
+      return fullname;
     });
 
     // initialize base-generators

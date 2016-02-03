@@ -4,7 +4,7 @@ require('mocha');
 var path = require('path');
 var assert = require('assert');
 var Base = require('base');
-var option = require('base-options');
+var option = require('base-option');
 var register = require('../lib/register');
 var generators = require('..');
 var base;
