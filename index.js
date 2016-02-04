@@ -137,7 +137,7 @@ module.exports = function generators(config) {
         if (!app) break;
       }
 
-      getCache[name] = app;
+      if (app) getCache[name] = app;
       return app;
     });
 
