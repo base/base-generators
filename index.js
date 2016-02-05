@@ -7,10 +7,10 @@
 
 'use strict';
 
+var path = require('path');
 var async = require('async');
 var util = require('generator-util');
 var debug = require('debug')('base:generators');
-var register = require('./lib/register');
 var tasks = require('./lib/tasks');
 var cache = require('./lib/cache');
 var utils = require('./lib/utils');
@@ -23,7 +23,9 @@ var env = require('./lib/env');
 module.exports = function generators(config) {
   return function(app) {
     if (this.isRegistered('base-generators')) return;
+
     this.isGenerator = true;
+    var resolveCache = {};
     var globalCache = {};
     var getCache = {};
 
@@ -35,13 +37,87 @@ module.exports = function generators(config) {
     this.define('initGenerators', function() {
       this.options = utils.extend({}, this.options, config);
       this.use(utils.cwd());
-      if (typeof this.task !== 'function') {
-        this.use(utils.task());
-      }
+      this.use(utils.task());
       this.use(tasks(this.options));
-      this.use(register(this.options));
       this.use(cache(this.options));
       this.use(env(this.options));
+    });
+
+    /**
+     * Attempts to find a generator with the given `name` and `options`.
+     *
+     * ```js
+     * // resolve by generator "alias"
+     * app.resolve('foo');
+     *
+     * // resolve by generator name
+     * app.resolve('generate-foo');
+     *
+     * // resolve by filepath
+     * app.resolve('./a/b/c/');
+     * ```
+     * @name .resolve
+     * @param {String} `name` Can be a module name or filepath to a module that is locally or globally installed.
+     * @param {Object} `options`
+     * @return {Object} Returns the filepath to the generator, if found.
+     * @api public
+     */
+
+    this.define('resolve', function(name, options) {
+      var opts = util.extend({ configfile: this.configfile }, options);
+      var fullname = this.toFullname(name);
+
+      if (resolveCache[fullname]) {
+        return resolveCache[fullname];
+      }
+
+      debug('resolving: "%s", at cwd: "%s"', name, opts.cwd);
+      var filepath = util.tryResolve(fullname, opts)
+        || util.tryResolve(name, opts)
+        || util.tryResolve(path.join(fullname, this.configfile), opts);
+
+      if (filepath) {
+        resolveCache[fullname] = filepath;
+        return filepath;
+      }
+    });
+
+    /**
+     * Register configfile with the given `name` and `options`.
+     *
+     * @param {String} `name`
+     * @param {String} `configfile`
+     * @param {Object} `options`
+     * @return {object}
+     * @api public
+     */
+
+    this.define('registerConfig', function(name, configfile, options) {
+      var opts = util.extend({ cwd: this.cwd }, options);
+
+      debug('registering configfile "%s", at cwd: "%s"', name, opts.cwd);
+      var fn = util.configfile(configfile, opts);
+      return this.register(name, fn);
+    });
+
+    /**
+     * Register generator `name` with the given `fn`.
+     *
+     * ```js
+     * base.register('foo', function(app, base) {
+     *   // "app" is a private instance created for the generator
+     *   // "base" is a shared instance
+     * });
+     * ```
+     * @name .register
+     * @param {String} `name`
+     * @param {Function} `fn` Generator function or instance
+     * @return {Object} Returns the generator instance.
+     * @api public
+     */
+
+    this.define('register', function(name, fn) {
+      return this.generators.set(name, fn, this);
     });
 
     /**
@@ -65,14 +141,10 @@ module.exports = function generators(config) {
      */
 
     this.define('generator', function(name, fn) {
-      debug('registering generator "%s"', name);
-      this.emit('generator', name);
-
       if (arguments.length === 1 && typeof name === 'string') {
         var generator = this.getGenerator(name);
         if (generator) return generator;
       }
-
       this.register(name, fn);
       return this.getGenerator(name);
     });
@@ -121,7 +193,7 @@ module.exports = function generators(config) {
      */
 
     this.define('getGenerator', function(name, fn) {
-      debug('getting generator "%s"', name);
+      debug('getGenerator "%s"', name);
 
       if (typeof fn !== 'function') {
         fn = this.toAlias.bind(this);
@@ -137,8 +209,10 @@ module.exports = function generators(config) {
         if (!app) break;
       }
 
-      if (app) getCache[name] = app;
-      return app;
+      if (app) {
+        getCache[name] = app;
+        return app;
+      }
     });
 
     /**
@@ -181,6 +255,8 @@ module.exports = function generators(config) {
     this.define('findGenerator', function(name, fn) {
       debug('finding generator "%s"', name);
 
+      fn = fn || this.toAlias.bind(this);
+
       return this.generators.get(name, fn)
         || this.base.generators.get(name, fn)
         || this.globalGenerator(name);
@@ -203,9 +279,14 @@ module.exports = function generators(config) {
       if (Array.isArray(app)) {
         return app.forEach(this.invoke.bind(this));
       }
+      var orig = app;
       if (typeof app === 'string') {
         app = this.generator(app);
       }
+      if (typeof app === 'undefined') {
+        throw new Error('cannot find generator "' + orig + '"');
+      }
+
       debug('invoking generator "%s"', app.namespace);
       return utils.invoke(app, this);
     });
@@ -338,6 +419,9 @@ module.exports = function generators(config) {
 
     app.define('toAlias', function toAlias(name, options) {
       var opts = util.extend({}, config, this.options, options);
+      if (!opts.prefix && !opts.modulename) {
+        opts.prefix = this.modulename;
+      }
       var alias = util.toAlias(name, opts);
       debug('created alias "%s" for string "%s"', alias, name);
       return alias;
@@ -358,6 +442,66 @@ module.exports = function generators(config) {
       var fullname = util.toFullname(alias, opts);
       debug('created fullname "%s" for alias "%s"', fullname, alias);
       return fullname;
+    });
+
+    /**
+     * Getter/setter for defining the `configfile` name to use for lookups.
+     * By default `configfile` is set to `generator.js`.
+     *
+     * @name .configfile
+     * @api public
+     */
+
+    Object.defineProperty(app, 'configfile', {
+      configurable: true,
+      set: function(configfile) {
+        this.options.configfile = configfile;
+      },
+      get: function() {
+        return this.options.configfile || 'generator.js';
+      }
+    });
+
+    /**
+     * Getter/setter for defining the `modulename` name to use for lookups.
+     * By default `modulename` is set to `generate`.
+     *
+     * @name .modulename
+     * @api public
+     */
+
+    Object.defineProperty(app, 'modulename', {
+      configurable: true,
+      set: function(modulename) {
+        this.options.modulename = modulename;
+      },
+      get: function() {
+        return this.options.modulename || this.options.prefix || 'generate';
+      }
+    });
+
+    /**
+     * Getter/setter for the `base` (or shared) instance of `generate`.
+     *
+     * When a generator is registered, the current instance (`this`) is
+     * passed as the "parent" instance to the generator. The `base` getter
+     * ensures that the `base` instance is always the _first instance_.
+     *
+     * ```js
+     * app.register('foo', function(app, base) {
+     *   // "app" is a private instance created for "foo"
+     *   // "base" is a shared instance, also accessible using `app.base`
+     * });
+     * ```
+     * @name .base
+     * @api public
+     */
+
+    Object.defineProperty(app, 'base', {
+      configurable: true,
+      get: function() {
+        return this.parent ? this.parent.base : this;
+      }
     });
 
     // initialize base-generators
