@@ -21,12 +21,15 @@ var env = require('./lib/env');
  */
 
 module.exports = function generators(config) {
+  config = config || {};
+
   return function(app) {
     if (this.isRegistered('base-generators')) return;
 
     this.isGenerator = true;
     var resolveCache = {};
     var globalCache = {};
+    var findCache = {};
     var getCache = {};
 
     /**
@@ -36,8 +39,10 @@ module.exports = function generators(config) {
 
     this.define('initGenerators', function() {
       this.options = utils.extend({}, this.options, config);
+      if (!this.task) {
+        this.use(utils.task());
+      }
       this.use(utils.cwd());
-      this.use(utils.task());
       this.use(tasks(this.options));
       this.use(cache(this.options));
       this.use(env(this.options));
@@ -65,19 +70,20 @@ module.exports = function generators(config) {
 
     this.define('resolve', function(name, options) {
       var opts = util.extend({ configfile: this.configfile }, options);
-      var fullname = this.toFullname(name);
 
-      if (resolveCache[fullname]) {
-        return resolveCache[fullname];
+      if (resolveCache[name]) {
+        return resolveCache[name];
       }
 
+      var fullname = this.toFullname(name);
       debug('resolving: "%s", at cwd: "%s"', name, opts.cwd);
       var filepath = util.tryResolve(fullname, opts)
         || util.tryResolve(name, opts)
+        || util.tryResolve(path.join(name, this.configfile), opts)
         || util.tryResolve(path.join(fullname, this.configfile), opts);
 
       if (filepath) {
-        resolveCache[fullname] = filepath;
+        resolveCache[name] = filepath;
         return filepath;
       }
     });
@@ -173,7 +179,11 @@ module.exports = function generators(config) {
      */
 
     this.define('hasGenerator', function(name) {
-      return this.has(util.toGeneratorPath(name));
+      var objectPath = util.toGeneratorPath(name);
+      if (this.has(objectPath)) {
+        return objectPath;
+      }
+      return false;
     });
 
     /**
@@ -193,7 +203,7 @@ module.exports = function generators(config) {
      */
 
     this.define('getGenerator', function(name, fn) {
-      debug('getGenerator "%s"', name);
+      debug('getting generator "%s"', name);
 
       if (typeof fn !== 'function') {
         fn = this.toAlias.bind(this);
@@ -254,12 +264,20 @@ module.exports = function generators(config) {
 
     this.define('findGenerator', function(name, fn) {
       debug('finding generator "%s"', name);
+      if (findCache[name]) {
+        return findCache[name];
+      }
 
       fn = fn || this.toAlias.bind(this);
 
-      return this.generators.get(name, fn)
+      var generator = this.generators.get(name, fn)
         || this.base.generators.get(name, fn)
         || this.globalGenerator(name);
+
+      if (generator) {
+        findCache[name] = generator;
+        return generator;
+      }
     });
 
     /**
@@ -279,10 +297,12 @@ module.exports = function generators(config) {
       if (Array.isArray(app)) {
         return app.forEach(this.invoke.bind(this));
       }
+
       var orig = app;
       if (typeof app === 'string') {
         app = this.generator(app);
       }
+
       if (typeof app === 'undefined') {
         throw new Error('cannot find generator "' + orig + '"');
       }
@@ -356,6 +376,12 @@ module.exports = function generators(config) {
       var args = [].slice.call(arguments);
       cb = args.pop();
 
+      if (typeof cb === 'function' && cb.name === 'finishRun') {
+        var gen = this.getGenerator(name);
+        tasks = Array.isArray(tasks) ? tasks : ['default'];
+        return gen.build(tasks, cb);
+      }
+
       var res = this.resolveTasks.apply(this, args);
       if (res.tasks === null) {
         debug('no default tasks defined');
@@ -420,7 +446,7 @@ module.exports = function generators(config) {
     app.define('toAlias', function toAlias(name, options) {
       var opts = util.extend({}, config, this.options, options);
       if (!opts.prefix && !opts.modulename) {
-        opts.prefix = this.modulename;
+        opts.prefix = this.prefix;
       }
       var alias = util.toAlias(name, opts);
       debug('created alias "%s" for string "%s"', alias, name);
@@ -438,7 +464,7 @@ module.exports = function generators(config) {
      */
 
     app.define('toFullname', function toFullname(alias, options) {
-      var opts = util.extend({prefix: this.modulename}, config, this.options, options);
+      var opts = util.extend({prefix: this.prefix}, config, this.options, options);
       var fullname = util.toFullname(alias, opts);
       debug('created fullname "%s" for alias "%s"', fullname, alias);
       return fullname;
@@ -470,13 +496,13 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    Object.defineProperty(app, 'modulename', {
+    Object.defineProperty(app, 'prefix', {
       configurable: true,
-      set: function(modulename) {
-        this.options.modulename = modulename;
+      set: function(prefix) {
+        this.options.prefix = prefix;
       },
       get: function() {
-        return this.options.modulename || this.options.prefix || 'generate';
+        return this.options.prefix || 'generate';
       }
     });
 

@@ -12,12 +12,12 @@ describe('.toAlias', function() {
     base = new Base();
   });
 
-  it('should create an alias from a name with a dash', function() {
-    assert.equal(base.toAlias('foo-bar'), 'bar');
+  it('should not create an alias when no prefix is given', function() {
+    assert.equal(base.toAlias('foo-bar'), 'foo-bar');
   });
 
   it('should create an alias using the given prefix', function() {
-    assert.equal(base.toAlias('foo-bar', {prefix: 'f'}), 'oo-bar');
+    assert.equal(base.toAlias('foo-bar', {prefix: 'foo'}), 'bar');
   });
 
   it('should create an alias using the given alias function', function() {

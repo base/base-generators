@@ -111,6 +111,22 @@ describe('.generate', function() {
       });
     });
 
+    it('should run a generator from a task with the same name', function(cb) {
+      base.register('foo', function(app) {
+        app.task('default', function() {
+          cb();
+        });
+      });
+      
+      base.task('foo', function(cb) {
+        base.generate('foo', cb);
+      });
+
+      base.build('foo', function(err) {
+        if (err) cb(err);
+      })
+    });
+
     it('should run the default task on a generator', function(cb) {
       base.register('foo', function(app) {
         app.task('default', function(next) {

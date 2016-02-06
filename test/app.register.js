@@ -5,37 +5,10 @@ var path = require('path');
 var assert = require('assert');
 var Base = require('base');
 var option = require('base-option');
-var register = require('../lib/register');
 var generators = require('..');
 var base;
 
 var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
-
-describe('.register plugin', function() {
-  it('should register as a plugin', function() {
-    var base = new Base();
-    base.use(register());
-    assert(base.registered.hasOwnProperty('base-generators-register'));
-  });
-
-  it('should only register as a plugin once', function(cb) {
-    base = new Base();
-    base.registered = {};
-
-    var count = 0;
-    base.on('plugin', function() {
-      count++;
-    });
-
-    base.use(register());
-    base.use(register());
-    base.use(register());
-    base.use(register());
-    base.use(register());
-    assert.equal(count, 1);
-    cb();
-  });
-});
 
 describe('.register', function() {
   beforeEach(function() {
@@ -175,17 +148,6 @@ describe('.register', function() {
   });
   
   describe('alias', function() {
-    it('should create an alias by stripping everything up to the first dash', function() {
-      base.register('foo-bar-baz', function() {});
-      base.register('a-b-c', function() {});
-      base.register('x-y', function() {});
-      base.register('z', function() {});
-      assert(base.generators.hasOwnProperty('bar-baz'));
-      assert(base.generators.hasOwnProperty('b-c'));
-      assert(base.generators.hasOwnProperty('y'));
-      assert(base.generators.hasOwnProperty('z'));
-    });
-
     it('should use a custom function to create the alias', function() {
       base.option('alias', function(name) {
         return name.slice(name.lastIndexOf('-') + 1);
@@ -203,7 +165,7 @@ describe('.register', function() {
     });
 
     it('should register a generator function by alias', function() {
-      base.register('base-abc', function() {});
+      base.register('abc', function() {});
       assert(base.generators.hasOwnProperty('abc'));
     });
 
@@ -214,7 +176,7 @@ describe('.register', function() {
 
     it('should register a generator from a configfile filepath', function() {
       base.register('base-abc', fixtures('generators/a/generator.js'));
-      assert(base.generators.hasOwnProperty('abc'));
+      assert(base.generators.hasOwnProperty('base-abc'));
     });
 
     it('should throw when a generator does not expose the instance', function(cb) {
@@ -231,7 +193,7 @@ describe('.register', function() {
   describe('instance', function() {
     it('should register an instance', function() {
       base.register('base-inst', new Base());
-      assert(base.generators.hasOwnProperty('inst'));
+      assert(base.generators.hasOwnProperty('base-inst'));
     });
 
     it('should get a generator that was registered as an instance', function() {

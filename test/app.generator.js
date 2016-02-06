@@ -24,14 +24,14 @@ describe('.generator', function() {
     });
 
     it('should register a generator function by alias', function() {
-      base.generator('base-abc', function() {});
+      base.generator('generate-abc', function() {});
       assert(base.generators.hasOwnProperty('abc'));
     });
   });
 
   describe('get > alias', function() {
     it('should get a generator by alias', function() {
-      base.generator('base-abc', function() {});
+      base.generator('generate-abc', function() {});
       var abc = base.generator('abc');
       assert(abc);
       assert.equal(typeof abc, 'object');
@@ -40,8 +40,8 @@ describe('.generator', function() {
 
   describe('get > name', function() {
     it('should get a generator by name', function() {
-      base.generator('base-abc', function() {});
-      var abc = base.generator('generator-abc');
+      base.generator('generate-abc', function() {});
+      var abc = base.generator('generate-abc');
       assert(abc);
       assert.equal(typeof abc, 'object');
     });

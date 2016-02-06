@@ -67,16 +67,16 @@ describe('env', function() {
       assert.equal(base.env.alias, 'foo');
     });
 
-    it('should use generate as `modulename` when not defined', function() {
+    it('should use generate as `prefix` when not defined', function() {
       var fn = function() {};
-      delete base.modulename;
+      delete base.prefix;
       base.createEnv('foo', {}, fn);
       assert.equal(base.env.name, 'generate-foo');
     });
 
-    it('should use `modulename` to add a full name to the env object', function() {
+    it('should use `prefix` to add a full name to the env object', function() {
       var fn = function() {};
-      base.modulename = 'whatever';
+      base.prefix = 'whatever';
       base.createEnv('foo', {}, fn);
       assert.equal(base.env.name, 'whatever-foo');
     });
