@@ -34,7 +34,7 @@
     "base": "^0.6.7",
     "base-option": "^0.6.1",
     "composer-runtimes": "^0.7.0",
-    "generate-foo": "^0.1.1",
+    "generate-foo": "^0.1.4",
     "global-modules": "^0.2.0",
     "gulp": "^3.9.0",
     "gulp-eslint": "^1.1.1",
@@ -61,18 +61,20 @@
     "yo"
   ],
   "verb": {
+    "toc": true,
     "plugins": [
       "gulp-format-md"
     ],
     "layout": "default",
     "related": {
+      "highlight": "base-task",
       "list": [
         "bach",
         "base",
         "base-fs",
         "base-pipeline",
         "base-plugins",
-        "base-tasks",
+        "base-task",
         "composer",
         "gulp"
       ]
