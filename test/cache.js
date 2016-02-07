@@ -49,6 +49,15 @@ describe('cache', function() {
       base.generators.set('foo', function() {}, base);
       assert(base.generators.hasOwnProperty('foo'));
     });
+
+    it('should set options from the base instance on new instances', function() {
+      base = new Base({options: {a: 'b'}});
+      assert.equal(base.options.a, 'b');
+
+      base.generators.set('foo', function() {}, base);
+      assert(base.generators.hasOwnProperty('foo'));
+      assert.equal(base.generators.foo.options.a, 'b');
+    });
   });
 
   describe('get', function() {
