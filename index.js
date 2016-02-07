@@ -40,9 +40,9 @@ module.exports = function generators(config) {
     this.define('initGenerators', function() {
       this.options = utils.extend({}, this.options, config);
       if (!this.task) {
-        this.use(utils.task());
+        this.use(utils.task(this.options));
       }
-      this.use(utils.cwd());
+      this.use(utils.cwd(this.options));
       this.use(tasks(this.options));
       this.use(cache(this.options));
       this.use(env(this.options));
