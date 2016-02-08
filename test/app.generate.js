@@ -185,11 +185,10 @@ describe('.generate', function() {
       });
     });
 
-    it.only('should run the default tasks on an array of generators', function(cb) {
+    it('should run the default tasks on an array of generators', function(cb) {
       var count = 0;
       base.register('a', function(app) {
         this.task('default', function(cb) {
-          console.log(app.namespace)
           count++;
           cb();
         });
@@ -197,7 +196,6 @@ describe('.generate', function() {
       
       base.register('b', function(app) {
         this.task('default', function(cb) {
-          console.log(app.namespace)
           count++;
           cb();
         });
@@ -205,7 +203,6 @@ describe('.generate', function() {
 
       base.register('c', function(app) {
         this.task('default', function(cb) {
-          console.log(app.namespace)
           count++;
           cb();
         });
