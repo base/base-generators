@@ -27,9 +27,9 @@ describe('.resolve', function() {
       var fp = base.resolve(fixtures('a'));
       assert.equal(typeof fp, 'string');
     });
-    
+
     it('should resolve a generator path from a cwd', function() {
-      assert(base.resolve('a', fixtures()));
+      assert(base.resolve('a', {cwd: fixtures()}));
     });
 
     it('should resolve a generator path from a generator name', function() {
