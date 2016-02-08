@@ -21,8 +21,10 @@
     "test": "mocha"
   },
   "dependencies": {
+    "array-unique": "^0.2.1",
     "async": "^1.5.2",
     "base-cwd": "^0.1.1",
+    "base-plugins": "^0.4.1",
     "base-task": "^0.4.0",
     "debug": "^2.2.0",
     "extend-shallow": "^2.0.1",

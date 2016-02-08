@@ -42,6 +42,9 @@ module.exports = function generators(config) {
       if (!this.task) {
         this.use(utils.task(this.options));
       }
+      if (!this.fns) {
+        this.use(utils.plugin(this.options));
+      }
       this.use(utils.cwd(this.options));
       this.use(tasks(this.options));
       this.use(cache(this.options));

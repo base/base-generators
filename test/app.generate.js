@@ -185,6 +185,40 @@ describe('.generate', function() {
       });
     });
 
+    it.only('should run the default tasks on an array of generators', function(cb) {
+      var count = 0;
+      base.register('a', function(app) {
+        this.task('default', function(cb) {
+          console.log(app.namespace)
+          count++;
+          cb();
+        });
+      });
+      
+      base.register('b', function(app) {
+        this.task('default', function(cb) {
+          console.log(app.namespace)
+          count++;
+          cb();
+        });
+      });
+
+      base.register('c', function(app) {
+        this.task('default', function(cb) {
+          console.log(app.namespace)
+          count++;
+          cb();
+        });
+      });
+
+      base.generate(['a', 'b', 'c'], function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 3);
+        assert(!err);
+        cb();
+      });
+    });
+
     it('should run the default task on the default generator', function(cb) {
       var count = 0;
       base.register('default', function(app) {
