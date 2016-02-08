@@ -105,8 +105,10 @@ module.exports = function generators(config) {
       var opts = util.extend({ cwd: this.cwd }, options);
 
       debug('registering configfile "%s", at cwd: "%s"', name, opts.cwd);
+      this.createEnv('default', configfile, opts);
+
       var fn = util.configfile(configfile, opts);
-      return this.register(name, fn);
+      return this.base.invoke(fn);
     });
 
     /**
@@ -430,6 +432,7 @@ module.exports = function generators(config) {
       if (typeof tasks === 'function') {
         return this.generateEach('default', tasks);
       }
+
       async.eachSeries(util.arrayify(tasks), function(task, next) {
         var args = task.split(':').concat(next);
         this.generate.apply(this, args);
@@ -556,7 +559,7 @@ function generatorError(err, app, name, cb) {
   var msg = 'Cannot find ';
   if (app.hasGenerator(name) && name !== taskName) {
     msg += 'task: "' + taskName + '" in generator';
-  } else if (app.hasGenerator(name)) {
+  } else if (app.hasGenerator(name) || app.hasConfigfile) {
     msg += 'task';
   } else {
     msg += 'generator';
