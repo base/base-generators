@@ -405,17 +405,23 @@ module.exports = function generators(config) {
       var gen = res.generator;
       var app = this;
 
+      if (typeof gen.config === 'undefined') {
+        gen.build(res.tasks, build);
+        return;
+      }
+
       gen.config.process(config, function(err) {
         if (err) return cb(err);
-
-        gen.build(res.tasks, function(err) {
-          if (err) {
-            generatorError(err, app, name, cb);
-            return;
-          }
-          cb();
-        });
+        gen.build(res.tasks, build);
       });
+
+      function build(err) {
+        if (err) {
+          generatorError(err, app, name, cb);
+        } else {
+          cb();
+        }
+      }
     });
 
     /**

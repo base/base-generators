@@ -216,8 +216,9 @@ describe('cache', function() {
           assert.equal(typeof this.option, 'function');
 
           bar.generators.set('baz', function(baz) {
-            baz.use(function() {
+            baz.use(function fn() {
               this.ccc = 'ccc';
+              return fn;
             });
 
             assert.equal(this.aaa, 'aaa');
@@ -228,6 +229,7 @@ describe('cache', function() {
                 this.ddd = 'ddd';
               });
 
+              assert.equal(this.ccc, 'ccc');
               assert.equal(this.aaa, 'aaa');
               assert.equal(typeof this.option, 'function');
 
@@ -236,6 +238,7 @@ describe('cache', function() {
                   this.eee = 'eee';
                 });
 
+                assert.equal(this.ccc, 'ccc');
                 assert.equal(this.aaa, 'aaa');
                 assert.equal(typeof this.option, 'function');
 
