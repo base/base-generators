@@ -382,9 +382,11 @@ module.exports = function generators(config) {
       cb = args.pop();
 
       if (typeof cb === 'function' && cb.name === 'finishRun') {
-        var gen = this.getGenerator(name);
-        tasks = Array.isArray(tasks) ? tasks : ['default'];
-        return gen.build(tasks, cb);
+        if (typeof name === 'string' && !/\W/.test(name)) {
+          var gen = this.getGenerator(name);
+          tasks = Array.isArray(tasks) ? tasks : ['default'];
+          return gen.build(tasks, cb);
+        }
       }
 
       var res = this.resolveTasks.apply(this, args);
@@ -399,13 +401,20 @@ module.exports = function generators(config) {
         this.emit('generate', res.generator.env.alias, res.tasks);
       }
 
-      res.generator.build(res.tasks, function(err) {
-        if (err) {
-          generatorError(err, this, name, cb);
-          return;
-        }
-        cb();
-      }.bind(this));
+      var gen = res.generator;
+      var app = this;
+
+      gen.config.process(this.base.cache.config, function(err) {
+        if (err) return cb(err);
+
+        gen.build(res.tasks, function(err) {
+          if (err) {
+            generatorError(err, app, name, cb);
+            return;
+          }
+          cb();
+        });
+      });
     });
 
     /**

@@ -139,7 +139,7 @@ describe('generators events', function() {
         called++;
       });
 
-      function count() {
+      function count(err) {
         called++;
       }
 

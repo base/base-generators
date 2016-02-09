@@ -57,7 +57,7 @@ describe('cache', function() {
       base = new Base({options: {a: 'b'}});
       assert.equal(base.options.a, 'b');
 
-      base.generators.set('foo', function() {});      
+      base.generators.set('foo', function() {});
       assert(base.generators.hasOwnProperty('foo'));
       assert.equal(base.generators.foo.options.a, 'b');
     });
@@ -242,7 +242,6 @@ describe('cache', function() {
                 cb();
               });
             });
-            
           });
         });
       });
