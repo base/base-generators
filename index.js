@@ -401,10 +401,11 @@ module.exports = function generators(config) {
         this.emit('generate', res.generator.env.alias, res.tasks);
       }
 
+      var config = this.base.cache.config || {};
       var gen = res.generator;
       var app = this;
 
-      gen.config.process(this.base.cache.config, function(err) {
+      gen.config.process(config, function(err) {
         if (err) return cb(err);
 
         gen.build(res.tasks, function(err) {
