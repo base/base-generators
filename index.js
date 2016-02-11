@@ -219,17 +219,13 @@ module.exports = function generators(config) {
       var findGlobal = true;
       var app = this;
       var prop;
-      var n = 0;
 
       while ((prop = props.shift())) {
-        n++
-
         app = app.findGenerator(prop, fn, findGlobal);
-        if (!app) break;
-
-        if (n >= 1) {
-          findGlobal = false;
+        if (!app) {
+          break;
         }
+        findGlobal = false;
       }
 
       if (app) {
