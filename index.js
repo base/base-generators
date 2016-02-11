@@ -27,6 +27,8 @@ module.exports = function generators(config) {
     if (this.isRegistered('base-generators')) return;
 
     this.isGenerator = true;
+    this.define('firstGen', null);
+
     var resolveCache = {};
     var globalCache = {};
     var findCache = {};
@@ -214,14 +216,19 @@ module.exports = function generators(config) {
         fn = this.toAlias.bind(this);
       }
 
-      if (getCache[name]) return getCache[name];
-      var props = name.split('.');
-      var findGlobal = true;
-      var app = this;
-      var prop;
+      if (getCache[name]) {
+        return getCache[name];
+      }
 
-      while ((prop = props.shift())) {
-        app = app.findGenerator(prop, fn, findGlobal);
+      var findGlobal = true;
+      var props = name.split('.');
+      var len = props.length;
+      var idx = -1;
+      var app = this;
+
+      while (++idx < len) {
+        var key = props[idx];
+        app = app.findGenerator(key, fn, findGlobal);
         if (!app) {
           break;
         }
@@ -271,10 +278,10 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.define('findGenerator', function(name, fn, findGlobal) {
-      if (typeof fn === 'boolean') {
-        findGlobal = fn;
-        fn = null;
+    this.define('findGenerator', function(name, aliasFn, findGlobal) {
+      if (typeof aliasFn === 'boolean') {
+        findGlobal = aliasFn;
+        aliasFn = null;
       }
 
       debug('finding generator "%s"', name);
@@ -282,16 +289,29 @@ module.exports = function generators(config) {
         return findCache[name];
       }
 
-      fn = fn || this.toAlias.bind(this);
+      aliasFn = aliasFn || this.toAlias.bind(this);
 
-      var generator = this.generators.get(name, fn)
-        || this.base.generators.get(name, fn);
+      // if sub-generator, look for it on the first resolved generator
+      if (this.firstGen && this.firstGen.generators[name]) {
+        var sub = this.firstGen.getGenerator(name, aliasFn);
+        if (sub) {
+          return sub;
+        }
+      }
 
+      // search for generator on the instance cache, then if not found
+      // search for the generator on the base instance's cache
+      var generator = this.generators.get(name, aliasFn)
+        || this.base.generators.get(name, aliasFn);
+
+      // if global lookup is enabled, search global `node_modules`
       if (!generator && findGlobal === true) {
         generator = this.globalGenerator(name);
       }
 
+      // if resolved, cache it
       if (generator) {
+        if (!this.firstGen) this.firstGen = generator;
         findCache[name] = generator;
         return generator;
       }
@@ -395,16 +415,22 @@ module.exports = function generators(config) {
 
       if (typeof cb === 'function' && cb.name === 'finishRun') {
         if (typeof name === 'string' && !/\W/.test(name)) {
-          var gen = this.getGenerator(name);
+          var app = this.getGenerator(name);
           tasks = Array.isArray(tasks) ? tasks : ['default'];
-          return gen.build(tasks, cb);
+          if (tasks[0] === 'default' && !app.hasTask('default')) {
+            tasks = ['noop'];
+            app.task('noop', function(next) {
+              debug('running noop task');
+              next();
+            });
+          }
+          return app.build(tasks, build);
         }
       }
 
       var res = this.resolveTasks.apply(this, args);
       if (res.tasks === null) {
         debug('no default tasks defined');
-        this.emit('task:skipping');
         return cb();
       }
 
@@ -415,7 +441,7 @@ module.exports = function generators(config) {
 
       var config = this.base.cache.config || {};
       var gen = res.generator;
-      var app = this;
+      var self = this;
 
       if (typeof gen.config === 'undefined') {
         gen.build(res.tasks, build);
@@ -429,7 +455,7 @@ module.exports = function generators(config) {
 
       function build(err) {
         if (err) {
-          generatorError(err, app, name, cb);
+          generatorError(err, self, name, cb);
         } else {
           cb();
         }
@@ -545,7 +571,7 @@ module.exports = function generators(config) {
      *
      * When a generator is registered, the current instance (`this`) is
      * passed as the "parent" instance to the generator. The `base` getter
-     * ensures that the `base` instance is always the _first instance_.
+     * ensures that the `base` instance is always the firstGen instance_.
      *
      * ```js
      * app.register('foo', function(app, base) {
