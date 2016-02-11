@@ -421,6 +421,7 @@ module.exports = function generators(config) {
             tasks = ['noop'];
             app.task('noop', function(next) {
               debug('running noop task');
+              delete app.tasks.noop;
               next();
             });
           }
