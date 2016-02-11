@@ -216,12 +216,20 @@ module.exports = function generators(config) {
 
       if (getCache[name]) return getCache[name];
       var props = name.split('.');
+      var findGlobal = true;
       var app = this;
       var prop;
+      var n = 0;
 
       while ((prop = props.shift())) {
-        app = app.findGenerator(prop, fn);
+        n++
+
+        app = app.findGenerator(prop, fn, findGlobal);
         if (!app) break;
+
+        if (n >= 1) {
+          findGlobal = false;
+        }
       }
 
       if (app) {
@@ -267,7 +275,12 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.define('findGenerator', function(name, fn) {
+    this.define('findGenerator', function(name, fn, findGlobal) {
+      if (typeof fn === 'boolean') {
+        findGlobal = fn;
+        fn = null;
+      }
+
       debug('finding generator "%s"', name);
       if (findCache[name]) {
         return findCache[name];
@@ -276,8 +289,11 @@ module.exports = function generators(config) {
       fn = fn || this.toAlias.bind(this);
 
       var generator = this.generators.get(name, fn)
-        || this.base.generators.get(name, fn)
-        || this.globalGenerator(name);
+        || this.base.generators.get(name, fn);
+
+      if (!generator && findGlobal === true) {
+        generator = this.globalGenerator(name);
+      }
 
       if (generator) {
         findCache[name] = generator;
