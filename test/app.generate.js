@@ -13,7 +13,7 @@ describe('.generate', function() {
     base = new Base();
     base.use(option());
   });
-  
+
   describe('generators', function(cb) {
     it('should throw an error when a generator is not found', function(cb) {
       base.generate('fdsslsllsfjssl', function(err) {
@@ -79,13 +79,11 @@ describe('.generate', function() {
       });
     });
 
-    it('should run a task instead of a generator of the same name', function(cb) {
+    it('should run same-named task instead of a generator', function(cb) {
       base.register('123xyz', function(app) {
-        app.task('default', function() {
-          cb(new Error('expected the task to run first'));
-        });
+        cb(new Error('expected the task to run first'));
       });
-      
+
       base.task('123xyz', function() {
         cb();
       });
@@ -95,19 +93,64 @@ describe('.generate', function() {
       });
     });
 
-    it('should run a task on a generator with the same name when specified', function(cb) {
-      base.register('foo', function(app) {
+    it('should run a task instead of a generator with a default task', function(cb) {
+      base.register('123xyz', function(app) {
         app.task('default', function() {
-          cb();
+          cb(new Error('expected the task to run first'));
         });
       });
-      
+      base.task('123xyz', function() {
+        cb();
+      });
+      base.generate('123xyz', function(err) {
+        assert(!err);
+      });
+    });
+
+    it('should run a task on a same-named generator when the task is specified', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
       base.task('foo', function() {
         cb(new Error('expected the generator to run'));
       });
 
       base.generate('foo:default', function(err) {
         assert(!err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run an array of tasks that includes a same-named generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.register('bar', function(app) {
+        app.task('baz', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.task('foo', function() {
+        cb(new Error('expected the generator to run'));
+      });
+
+      base.generate(['foo:default', 'bar:baz'], function(err) {
+        assert(!err);
+        assert.equal(count, 2);
+        cb();
       });
     });
 
@@ -117,7 +160,7 @@ describe('.generate', function() {
           cb();
         });
       });
-      
+
       base.task('foo', function(cb) {
         base.generate('foo', cb);
       });
@@ -193,7 +236,7 @@ describe('.generate', function() {
           cb();
         });
       });
-      
+
       base.register('b', function(app) {
         this.task('default', function(cb) {
           count++;
@@ -261,7 +304,7 @@ describe('.generate', function() {
           next();
         });
       });
-      
+
       base.generate('foo', ['abc'], function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
@@ -292,7 +335,7 @@ describe('.generate', function() {
           next();
         });
       });
-      
+
       base.generate('foo', 'a,b,c', function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
@@ -373,7 +416,7 @@ describe('.generate', function() {
           });
         });
       });
-      
+
       base.generate('foo.bar', ['a', 'b', 'c'], function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
@@ -406,7 +449,7 @@ describe('.generate', function() {
           });
         });
       });
-      
+
       base.generate('foo.bar', 'a,b,c', function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
