@@ -532,6 +532,28 @@ module.exports = function generators(config) {
     });
 
     /**
+     * Getter/setter for defining the `configname` name to use for lookups.
+     * By default `configname` is set to `generator.js`.
+     *
+     * @name .configname
+     * @api public
+     */
+
+    Object.defineProperty(app, 'configname', {
+      configurable: true,
+      set: function(configname) {
+        this.options.configname = configname;
+        this.options.configfile = configname + '.js';
+      },
+      get: function() {
+        if (this.options.configname) {
+          return this.options.configname;
+        }
+        return (this.options.configname = utils.basename(this.configfile));
+      }
+    });
+
+    /**
      * Getter/setter for defining the `configfile` name to use for lookups.
      * By default `configfile` is set to `generator.js`.
      *
@@ -546,6 +568,24 @@ module.exports = function generators(config) {
       },
       get: function() {
         return this.options.configfile || 'generator.js';
+      }
+    });
+
+    /**
+     * Getter/setter for defining the `configpath` name to use for lookups.
+     * By default `configpath` is set to `generator.js`.
+     *
+     * @name .configpath
+     * @api public
+     */
+
+    Object.defineProperty(app, 'configpath', {
+      configurable: true,
+      set: function(configpath) {
+        this.options.configpath = path.resolve(configpath);
+      },
+      get: function() {
+        return this.options.configpath || path.resolve(this.cwd, this.configfile);
       }
     });
 

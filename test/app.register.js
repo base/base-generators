@@ -17,7 +17,7 @@ describe('.register', function() {
     base.use(option());
   });
 
-  describe('properties', function() {
+  describe('configfile', function() {
     it('should expose a configfile getter/setter', function() {
       assert.equal(typeof base.configfile, 'string');
     });
@@ -29,6 +29,39 @@ describe('.register', function() {
     it('should set configfile', function() {
       base.configfile = 'foo.js';
       assert.equal(base.configfile, 'foo.js');
+    });
+  });
+
+  describe('configname', function() {
+    it('should expose a configname getter/setter', function() {
+      assert.equal(typeof base.configname, 'string');
+    });
+
+    it('should set configname to generator by default', function() {
+      assert.equal(base.configname, 'generator');
+    });
+
+    it('should set configname', function() {
+      base.configname = 'foo';
+      assert.equal(base.configname, 'foo');
+    });
+  });
+
+  describe('configpath', function() {
+    it('should expose a configpath getter/setter', function() {
+      assert.equal(typeof base.configpath, 'string');
+    });
+
+    it('should use configfile as basename of configpath', function() {
+      base.cwd = __dirname;
+      base.configfile = 'whatever.js';
+      assert.equal(path.basename(base.configpath), 'whatever.js');
+    });
+
+    it('should resolve configpath from app.cwd and app.configfile', function() {
+      base.cwd = __dirname;
+      base.configfile = 'whatever.js';
+      assert.equal(base.configpath, path.resolve(__dirname, base.configfile));
     });
   });
 
@@ -146,7 +179,7 @@ describe('.register', function() {
       base.getGenerator('bar');
     });
   });
-  
+
   describe('alias', function() {
     it('should use a custom function to create the alias', function() {
       base.option('alias', function(name) {
