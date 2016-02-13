@@ -4,6 +4,8 @@
 
 You might also be interested in [base-task](https://github.com/node-base/base-task).
 
+## TOC
+
 - [Install](#install)
 - [Usage](#usage)
 - [Examples](#examples)
@@ -13,6 +15,7 @@ You might also be interested in [base-task](https://github.com/node-base/base-ta
 - [In the wild](#in-the-wild)
 - [API](#api)
 - [Related projects](#related-projects)
+- [Generate docs](#generate-docs)
 - [Running tests](#running-tests)
 - [Contributing](#contributing)
 - [Author](#author)
@@ -54,7 +57,7 @@ var base = new Base();
 
 ### Tasks
 
-Tasks are exactly the same as [gulp](http://gulpjs.com) tasks, and are powered by [bach](https://github.com/phated/bach) and [composer](https://github.com/jonschlinkert/composer).
+Tasks are exactly the same as [gulp](http://gulpjs.com) tasks, and are powered by [bach](https://github.com/gulpjs/bach) and [composer](https://github.com/doowb/composer).
 
 **Register a task:**
 
@@ -274,7 +277,7 @@ Register configfile with the given `name` and `options`.
 * `options` **{Object}**
 * `returns` **{object}**
 
-### [.register](index.js#L132)
+### [.register](index.js#L134)
 
 Register generator `name` with the given `fn`.
 
@@ -293,7 +296,7 @@ base.register('foo', function(app, base) {
 });
 ```
 
-### [.generator](index.js#L156)
+### [.generator](index.js#L158)
 
 Register generator `name` with the given `fn`, or get generator `name` if only one argument is passed. This method calls the `.getGenerator` method but goes one step further: if `name` is not already registered, it will try to resolve and register the generator before returning it (or `undefined` if unsuccessful).
 
@@ -312,7 +315,7 @@ base.generator('foo', function(app, base) {
 });
 ```
 
-### [.hasGenerator](index.js#L188)
+### [.hasGenerator](index.js#L190)
 
 Return true if the given `name` exists on the `generators` object. Dot-notation may be used to check for sub-generators.
 
@@ -336,7 +339,7 @@ base.hasGenerator('foo.bar');
 //=> true
 ```
 
-### [.getGenerator](index.js#L212)
+### [.getGenerator](index.js#L214)
 
 Get generator `name` from `app.generators`. Dot-notation may be used to get a sub-generator.
 
@@ -354,7 +357,7 @@ var foo = app.getGenerator('foo');
 var baz = app.getGenerator('foo.bar.baz');
 ```
 
-### [.globalGenerator](index.js#L254)
+### [.globalGenerator](index.js#L256)
 
 Search for globally installed generator `name`. If found, then generator
 is registered and returned, otherwise `undefined` is returned.
@@ -364,7 +367,7 @@ is registered and returned, otherwise `undefined` is returned.
 * `name` **{String}**
 * `returns` **{Object|undefined}**
 
-### [.findGenerator](index.js#L281)
+### [.findGenerator](index.js#L283)
 
 Find generator `name`, by first searching the cache,
 then searching the cache of the `base` generator,
@@ -376,7 +379,7 @@ and last searching for a globally installed generator.
 * `fn` **{Function}**: Optionally supply a rename function.
 * `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.
 
-### [.invoke](index.js#L333)
+### [.invoke](index.js#L335)
 
 Invoke the given generator in the context of (`this`) the current instance.
 
@@ -391,7 +394,7 @@ Invoke the given generator in the context of (`this`) the current instance.
 base.invoke('foo');
 ```
 
-### [.extendWith](index.js#L370)
+### [.extendWith](index.js#L372)
 
 Alias for `.invoke`, Extend the current generator instance with the settings of other generators.
 
@@ -411,7 +414,7 @@ base.extendWith('foo');
 base.extendWith(['foo', 'bar', 'baz']);
 ```
 
-### [.generate](index.js#L408)
+### [.generate](index.js#L410)
 
 Run a `generator` and `tasks`, calling the given `callback` function upon completion.
 
@@ -449,7 +452,7 @@ base.generate(function(err) {
 });
 ```
 
-### [.generateEach](index.js#L483)
+### [.generateEach](index.js#L485)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -468,7 +471,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.alias](index.js#L507)
+### [.alias](index.js#L509)
 
 Create a generator alias from the given `name`.
 
@@ -478,7 +481,7 @@ Create a generator alias from the given `name`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the alias.
 
-### [.fullname](index.js#L527)
+### [.fullname](index.js#L529)
 
 Create a generator's full name from the given `alias`.
 
@@ -488,17 +491,27 @@ Create a generator's full name from the given `alias`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the full name.
 
-### [.configfile](index.js#L542)
+### [.configname](index.js#L544)
+
+Getter/setter for defining the `configname` name to use for lookups.
+By default `configname` is set to `generator.js`.
+
+### [.configfile](index.js#L566)
 
 Getter/setter for defining the `configfile` name to use for lookups.
 By default `configfile` is set to `generator.js`.
 
-### [.modulename](index.js#L560)
+### [.configpath](index.js#L584)
+
+Getter/setter for defining the `configpath` name to use for lookups.
+By default `configpath` is set to `generator.js`.
+
+### [.modulename](index.js#L602)
 
 Getter/setter for defining the `modulename` name to use for lookups.
 By default `modulename` is set to `generate`.
 
-### [.base](index.js#L587)
+### [.base](index.js#L629)
 
 Getter/setter for the `base` (or shared) instance of `generate`.
 
@@ -533,6 +546,20 @@ Return true if the given `name` exists on the
 * [composer](https://www.npmjs.com/package/composer): API-first task runner with three methods: task, run and watch. | [homepage](https://github.com/doowb/composer)
 * [gulp](https://www.npmjs.com/package/gulp): The streaming build system | [homepage](http://gulpjs.com)
 
+## Generate docs
+
+Generate readme and API documentation with [verb](https://github.com/verbose/verb):
+
+```sh
+$ npm i -d && npm run docs
+```
+
+Or, if [verb](https://github.com/verbose/verb) is installed globally:
+
+```sh
+$ verb
+```
+
 ## Running tests
 
 Install dev dependencies:
@@ -559,4 +586,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/base-generator
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on February 11, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on February 12, 2016._
