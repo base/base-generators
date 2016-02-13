@@ -1,7 +1,7 @@
 {
   "name": "base-generators",
   "description": "Adds project-generator support to your `base` application.",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "homepage": "https://github.com/jonschlinkert/base-generators",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "jonschlinkert/base-generators",
@@ -65,10 +65,13 @@
   ],
   "verb": {
     "toc": true,
+    "layout": "default",
+    "tasks": [
+      "readme"
+    ],
     "plugins": [
       "gulp-format-md"
     ],
-    "layout": "default",
     "related": {
       "highlight": "base-task",
       "list": [
@@ -83,10 +86,10 @@
       ]
     },
     "reflinks": [
-      "verb",
       "bach",
       "composer",
-      "gulp"
+      "gulp",
+      "verb"
     ]
   }
 }
