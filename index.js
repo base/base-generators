@@ -110,7 +110,9 @@ module.exports = function generators(config) {
       this.createEnv('default', configfile, opts);
 
       var fn = util.configfile(configfile, opts);
-      return this.base.invoke(fn);
+      var app = this.base.invoke(fn);
+      this.register(name, app);
+      return app;
     });
 
     /**
