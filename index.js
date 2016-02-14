@@ -643,7 +643,7 @@ module.exports = function generators(config) {
  */
 
 function generatorError(err, app, name, cb) {
-  var match = /Invalid task `(.*?)`/.exec(err.message);
+  var match = /task "(.*?)" is not registered/.exec(err.message);
   if (!match) return cb(err);
 
   var taskName = match[1];
