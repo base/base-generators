@@ -20,7 +20,7 @@ describe('base-generators', function() {
       base.registered = {};
 
       var count = 0;
-      base.on('plugin', function(msg, name) {
+      base.on('plugin', function(name) {
         if (name === 'base-generators') {
           count++;
         }
