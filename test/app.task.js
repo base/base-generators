@@ -21,12 +21,54 @@ describe('.generate', function() {
     assert.equal(base.tasks.default.fn, fn);
   });
 
-  it('should register a task with an array of dependencies', function() {
-    base.task('default', ['foo', 'bar'], function(cb) {
-      cb();
+  it('should register a task with an array of dependencies', function(cb) {
+    var count = 0;
+    base.task('foo', function(next) {
+      count++;
+      next();
+    });
+    base.task('bar', function(next) {
+      count++;
+      next();
+    });
+    base.task('default', ['foo', 'bar'], function(next) {
+      count++;
+      next();
     });
     assert.equal(typeof base.tasks.default, 'object');
     assert.deepEqual(base.tasks.default.deps, ['foo', 'bar']);
+    base.build('default', function(err) {
+      if (err) return cb(err);
+      assert.equal(count, 3);
+      cb();
+    });
+  });
+
+  it('should run a glob of tasks', function(cb) {
+    var count = 0;
+    base.task('foo', function(next) {
+      count++;
+      next();
+    });
+    base.task('bar', function(next) {
+      count++;
+      next();
+    });
+    base.task('baz', function(next) {
+      count++;
+      next();
+    });
+    base.task('qux', function(next) {
+      count++;
+      next();
+    });
+    base.task('default', ['b*']);
+    assert.equal(typeof base.tasks.default, 'object');
+    base.build('default', function(err) {
+      if (err) return cb(err);
+      assert.equal(count, 2);
+      cb();
+    });
   });
 
   it('should register a task with a list of strings as dependencies', function() {
