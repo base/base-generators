@@ -1,6 +1,6 @@
 'use strict';
 
-var runtimes = require('composer-runtimes');
+var runtimes = require('base-runtimes');
 var task = require('base-task');
 var Base = require('base');
 var app = new Base();

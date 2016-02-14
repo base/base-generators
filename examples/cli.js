@@ -1,6 +1,6 @@
 'use strict';
 
-var runtimes = require('composer-runtimes');
+var runtimes = require('base-runtimes');
 var generators = require('..');
 var Base = require('base');
 Base.use(generators());
