@@ -11,6 +11,7 @@ var path = require('path');
 var async = require('async');
 var util = require('generator-util');
 var debug = require('debug')('base:generators');
+var search = require('./lib/search');
 var tasks = require('./lib/tasks');
 var cache = require('./lib/cache');
 var utils = require('./lib/utils');
@@ -29,10 +30,15 @@ module.exports = function generators(config) {
     this.isGenerator = true;
     this.define('firstGen', null);
 
-    var resolveCache = {};
-    var globalCache = {};
-    var findCache = {};
-    var getCache = {};
+    /**
+     * Search caches
+     */
+
+    var memory = {};
+    memory.getGenerator = search();
+    memory.resolve = search();
+    memory.global = search();
+    memory.find = search();
 
     /**
      * Add plugins necessary for running generators.
@@ -75,9 +81,8 @@ module.exports = function generators(config) {
 
     this.define('resolve', function(name, options) {
       var opts = util.extend({ configfile: this.configfile }, options);
-
-      if (resolveCache[name]) {
-        return resolveCache[name];
+      if (memory.resolve.has(name)) {
+        return memory.resolve.get(name);
       }
 
       var fullname = this.toFullname(name);
@@ -88,7 +93,7 @@ module.exports = function generators(config) {
         || util.tryResolve(path.join(fullname, this.configfile), opts);
 
       if (filepath) {
-        resolveCache[name] = filepath;
+        memory.resolve.set(name, filepath);
         return filepath;
       }
     });
@@ -211,18 +216,17 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.define('getGenerator', function(name, fn) {
+    this.define('getGenerator', function(name, aliasFn) {
       debug('getting generator "%s"', name);
 
-      if (typeof fn !== 'function') {
-        fn = this.toAlias.bind(this);
+      if (typeof aliasFn !== 'function') {
+        aliasFn = this.toAlias.bind(this);
       }
 
-      if (getCache[name]) {
-        return getCache[name];
+      if (memory.getGenerator.has(name)) {
+        return memory.getGenerator.get(name);
       }
 
-      var findGlobal = true;
       var props = name.split('.');
       var len = props.length;
       var idx = -1;
@@ -230,16 +234,68 @@ module.exports = function generators(config) {
 
       while (++idx < len) {
         var key = props[idx];
-        app = app.findGenerator(key, fn, findGlobal);
+        app = app.findGenerator(key, aliasFn);
         if (!app) {
           break;
         }
-        findGlobal = false;
       }
 
       if (app) {
-        getCache[name] = app;
+        memory.getGenerator.set(name, app);
         return app;
+      }
+    });
+
+    /**
+     * Find generator `name`, by first searching the cache,
+     * then searching the cache of the `base` generator,
+     * and last searching for a globally installed generator.
+     *
+     * @name .findGenerator
+     * @param {String} `name`
+     * @param {Function} `aliasFn` Optionally supply a rename function.
+     * @return {Object|undefined} Returns the generator instance if found, or undefined.
+     * @api public
+     */
+
+    this.define('findGenerator', function(name, aliasFn) {
+      debug('finding generator "%s"', name);
+      var gen = memory.find.get(name);
+      if (util.isObject(gen) || typeof gen === 'function') {
+        return gen;
+      }
+
+      aliasFn = aliasFn || this.toAlias.bind(this);
+
+      // if sub-generator, look for it on the first resolved generator
+      if (this.firstGen && this.firstGen.generators[name]) {
+        var sub = this.firstGen.getGenerator(name, aliasFn);
+        if (sub) {
+          memory.find.set(name, sub);
+          return sub;
+        }
+      }
+
+      // search for generator on the instance cache, then if not found
+      // search for the generator on the base instance's cache
+      var generator = this.generators.get(name, aliasFn)
+        || this.base.generators.get(name, aliasFn);
+
+      // try searching in local and global node_modules
+      if (!generator) {
+        var fp = this.resolve(name);
+        if (fp) generator = this.register(name, fp);
+      }
+
+      if (!generator && name.indexOf(this.prefix) === -1) {
+        generator = this.findGenerator(this.toFullname(name), aliasFn);
+      }
+
+      // if resolved, cache it
+      if (generator) {
+        if (!this.firstGen) this.firstGen = generator;
+        memory.find.set(name, generator);
+        return generator;
       }
     });
 
@@ -255,67 +311,21 @@ module.exports = function generators(config) {
 
     this.define('globalGenerator', function(name) {
       debug('getting global generator "%s"', name);
-      if (globalCache[name]) return globalCache[name];
+      if (memory.global.has(name)) {
+        return memory.global.get(name);
+      }
 
-      var filepath = this.resolve(name);
-      if (filepath) {
-        this.register(name, filepath);
-        var generator = this.generators.get(name);
+      var filepath = this.resolve(name, {cwd: util.gm});
+      if (memory.global.has(filepath)) {
+        return memory.global.get(filepath);
+      }
+
+      if (utils.isGenerator(filepath, this.prefix)) {
+        var generator = this.getGenerator(name);
         if (generator) {
-          globalCache[name] = generator;
+          memory.global.set(name, generator);
           return generator;
         }
-      }
-    });
-
-    /**
-     * Find generator `name`, by first searching the cache,
-     * then searching the cache of the `base` generator,
-     * and last searching for a globally installed generator.
-     *
-     * @name .findGenerator
-     * @param {String} `name`
-     * @param {Function} `fn` Optionally supply a rename function.
-     * @return {Object|undefined} Returns the generator instance if found, or undefined.
-     * @api public
-     */
-
-    this.define('findGenerator', function(name, aliasFn, findGlobal) {
-      if (typeof aliasFn === 'boolean') {
-        findGlobal = aliasFn;
-        aliasFn = null;
-      }
-
-      debug('finding generator "%s"', name);
-      if (findCache[name]) {
-        return findCache[name];
-      }
-
-      aliasFn = aliasFn || this.toAlias.bind(this);
-
-      // if sub-generator, look for it on the first resolved generator
-      if (this.firstGen && this.firstGen.generators[name]) {
-        var sub = this.firstGen.getGenerator(name, aliasFn);
-        if (sub) {
-          return sub;
-        }
-      }
-
-      // search for generator on the instance cache, then if not found
-      // search for the generator on the base instance's cache
-      var generator = this.generators.get(name, aliasFn)
-        || this.base.generators.get(name, aliasFn);
-
-      // if global lookup is enabled, search global `node_modules`
-      if (!generator && findGlobal === true) {
-        generator = this.globalGenerator(name);
-      }
-
-      // if resolved, cache it
-      if (generator) {
-        if (!this.firstGen) this.firstGen = generator;
-        findCache[name] = generator;
-        return generator;
       }
     });
 
@@ -506,7 +516,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    app.define('toAlias', function toAlias(name, options) {
+    this.define('toAlias', function toAlias(name, options) {
       var opts = util.extend({}, config, this.options, options);
       if (!opts.prefix && !opts.modulename) {
         opts.prefix = this.prefix;
@@ -526,7 +536,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    app.define('toFullname', function toFullname(alias, options) {
+    this.define('toFullname', function toFullname(alias, options) {
       var opts = util.extend({prefix: this.prefix}, config, this.options, options);
       var fullname = util.toFullname(alias, opts);
       debug('created fullname "%s" for alias "%s"', fullname, alias);

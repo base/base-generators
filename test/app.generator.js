@@ -16,7 +16,15 @@ describe('.generator', function() {
     Base.use(option());
     base = new Base();
   });
-  
+
+  describe('generator', function() {
+    it('should get a generator that has the name of a non-generator', function() {
+      var gen = base.getGenerator('mocha');
+      assert(gen);
+      assert.equal(gen.env.name, 'generate-mocha');
+    });
+  });
+
   describe('register > function', function() {
     it('should register a generator function by name', function() {
       base.generator('foo', function() {});
@@ -25,7 +33,7 @@ describe('.generator', function() {
 
     it('should register a generator function by alias', function() {
       base.generator('generate-abc', function() {});
-      assert(base.generators.hasOwnProperty('abc'));
+      assert(base.generators.hasOwnProperty('generate-abc'));
     });
   });
 

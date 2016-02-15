@@ -33,7 +33,7 @@ describe('.extendWith', function() {
     Base.use(generators());
     base = new Base();
   });
-  
+
   it('should get a named generator', function(cb) {
     base.register('foo', function(app) {
       app.extendWith('bar');
@@ -216,7 +216,7 @@ describe('.extendWith', function() {
 
       base.getGenerator('abc');
     });
-    
+
     it('should extend with a generator invoked from node_modules by alias', function(cb) {
       base.register('abc', function(app) {
         assert(!app.tasks.a);
@@ -286,7 +286,7 @@ describe('.extendWith', function() {
 
       base.getGenerator('foo');
     });
-    
+
     it('should invoke a sub-generator on the base instance', function(cb) {
       base.register('foo', function(app) {
         app.extendWith('bar.sub');
@@ -462,7 +462,7 @@ describe('.extendWith', function() {
 
       base.getGenerator('foo');
     });
-    
+
     it('should invoke sub-generator that invokes another sub-generator', function(cb) {
       base.register('foo', function(app) {
         app.extendWith('bar.sub');
