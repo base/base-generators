@@ -1,7 +1,7 @@
 {
   "name": "base-generators",
   "description": "Adds project-generator support to your `base` application.",
-  "version": "0.1.12",
+  "version": "0.1.14",
   "homepage": "https://github.com/jonschlinkert/base-generators",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "jonschlinkert/base-generators",
@@ -29,7 +29,7 @@
     "debug": "^2.2.0",
     "define-property": "^0.2.5",
     "extend-shallow": "^2.0.1",
-    "generator-util": "^0.2.6",
+    "generator-util": "^0.2.7",
     "get-value": "^2.0.3",
     "lazy-cache": "^1.0.3"
   },
