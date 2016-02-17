@@ -224,7 +224,9 @@ module.exports = function generators(config) {
       }
 
       if (memory.getGenerator.has(name)) {
-        return memory.getGenerator.get(name);
+        var gen = memory.getGenerator.get(name);
+        gen.option(this.options);
+        return gen;
       }
 
       var props = name.split('.');
@@ -241,6 +243,7 @@ module.exports = function generators(config) {
       }
 
       if (app) {
+        app.option(this.options);
         memory.getGenerator.set(name, app);
         return app;
       }
