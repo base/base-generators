@@ -31,6 +31,7 @@
     "extend-shallow": "^2.0.1",
     "generator-util": "^0.2.7",
     "get-value": "^2.0.3",
+    "is-absolute": "^0.2.3",
     "lazy-cache": "^1.0.3"
   },
   "devDependencies": {
@@ -41,7 +42,7 @@
     "global-modules": "^0.2.0",
     "gulp": "^3.9.0",
     "gulp-eslint": "^1.1.1",
-    "gulp-format-md": "^0.1.5",
+    "gulp-format-md": "^0.1.7",
     "gulp-istanbul": "^0.10.3",
     "gulp-mocha": "^2.2.0",
     "minimist": "^1.2.0",

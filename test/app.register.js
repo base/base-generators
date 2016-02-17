@@ -187,7 +187,8 @@ describe('.register', function() {
       });
 
       base.register('base-abc-xyz', function() {});
-      assert(base.generators.hasOwnProperty('xyz'));
+      assert(base.generators.hasOwnProperty('base-abc-xyz'));
+      assert.equal(base.generators['base-abc-xyz'].env.alias, 'xyz');
     });
   });
 

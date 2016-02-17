@@ -219,14 +219,18 @@ module.exports = function generators(config) {
     this.define('getGenerator', function(name, aliasFn) {
       debug('getting generator "%s"', name);
 
+      var gen = this.generators[name];
+      if (gen) {
+        memory.getGenerator.set(name, gen);
+        return gen;
+      }
+
       if (typeof aliasFn !== 'function') {
         aliasFn = this.toAlias.bind(this);
       }
 
       if (memory.getGenerator.has(name)) {
-        var gen = memory.getGenerator.get(name);
-        gen.option(this.options);
-        return gen;
+        return memory.getGenerator.get(name);
       }
 
       var props = name.split('.');
@@ -243,7 +247,6 @@ module.exports = function generators(config) {
       }
 
       if (app) {
-        app.option(this.options);
         memory.getGenerator.set(name, app);
         return app;
       }
@@ -287,7 +290,9 @@ module.exports = function generators(config) {
       // try searching in local and global node_modules
       if (!generator) {
         var fp = this.resolve(name);
-        if (fp) generator = this.register(name, fp);
+        if (fp) {
+          generator = this.generator(name, fp);
+        }
       }
 
       if (!generator && name.indexOf(this.prefix) === -1) {
