@@ -113,7 +113,6 @@ module.exports = function generators(config) {
 
       debug('registering configfile "%s", at cwd: "%s"', name, opts.cwd);
       this.createEnv('default', configfile, opts);
-
       var fn = util.configfile(configfile, opts);
       var app = this.base.invoke(fn);
       this.register(name, app);
@@ -296,7 +295,10 @@ module.exports = function generators(config) {
       }
 
       if (!generator && name.indexOf(this.prefix) === -1) {
-        generator = this.findGenerator(this.toFullname(name), aliasFn);
+        var fullname = this.toFullname(name);
+        if (name !== fullname) {
+          generator = this.findGenerator(fullname, aliasFn);
+        }
       }
 
       // if resolved, cache it
