@@ -14,8 +14,8 @@ describe('.resolve', function() {
   beforeEach(function() {
     base = new Base();
     base.use(generators());
-    base.foo.resolve(fixtures('*/*.js'));
-    base.foo.resolve('generate-*/*.js');
+    base.apps.resolve(fixtures('*/*.js'));
+    base.apps.resolve('generate-*/*.js');
   });
 
   describe('method', function() {
@@ -70,9 +70,14 @@ describe('.resolve', function() {
       assert.equal(typeof actual, 'string');
     });
 
-    it('should return undefined when a generator is not found at the given cwd', function() {
-      var actual = base.resolve('slslslsl', {cwd: fixtures()});
-      assert.equal(typeof actual, 'undefined');
+    it('should throw an error when a generator is not found at the given cwd', function(cb) {
+      try {
+        base.resolve('foofof', {cwd: fixtures()});
+        cb(new Error('expected an error'));
+      } catch (err) {
+        assert.equal(err.code, 'ENOENT');
+        cb();
+      }
     });
   });
 });

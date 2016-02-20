@@ -18,10 +18,11 @@ describe('.generator', function() {
   });
 
   describe('generator', function() {
-    it('should get a generator by name', function() {
+    it('should get a generator by alias', function() {
       var gen = base.getGenerator('mocha');
       assert(gen);
-      assert.equal(gen.env.name, 'mocha');
+      assert.equal(gen.env.name, 'generate-mocha');
+      assert.equal(gen.env.alias, 'mocha');
     });
   });
 

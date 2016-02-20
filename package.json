@@ -21,6 +21,10 @@
     "test": "mocha"
   },
   "dependencies": {
+    "ansi-bold": "^0.1.1",
+    "ansi-magenta": "^0.1.1",
+    "ansi-yellow": "^0.1.1",
+    "arr-union": "^3.0.0",
     "array-unique": "^0.2.1",
     "async": "^1.5.2",
     "base-cwd": "^0.1.3",
@@ -32,10 +36,14 @@
     "generator-util": "^0.2.7",
     "get-value": "^2.0.3",
     "is-absolute": "^0.2.3",
-    "lazy-cache": "^1.0.3"
+    "lazy-cache": "^1.0.3",
+    "map-cache": "^0.2.0",
+    "mixin-deep": "^1.1.3",
+    "resolve": "^1.1.7",
+    "vinyl": "^1.1.1"
   },
   "devDependencies": {
-    "base": "^0.7.2",
+    "base": "^0.7.4",
     "base-option": "^0.6.1",
     "base-runtimes": "^0.1.4",
     "generate-foo": "^0.1.5",
