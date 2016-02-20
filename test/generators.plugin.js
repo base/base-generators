@@ -10,8 +10,8 @@ var base;
 describe('base-generators', function() {
   describe('plugin', function() {
     it('should register as a plugin on `base`', function() {
+      Base.use(generators());
       base = new Base();
-      base.use(generators());
       assert.equal(base.isRegistered('base-generators'), true);
     });
 

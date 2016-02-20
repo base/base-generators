@@ -92,6 +92,7 @@ describe('.generator', function() {
   it('should get a generator that was registered by path', function() {
     base.register('a', fixtures('generators/a'));
     var generator = base.getGenerator('a');
+
     assert(generator);
     assert(generator.tasks);
     assert(generator.tasks.hasOwnProperty('default'));

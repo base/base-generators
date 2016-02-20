@@ -32,7 +32,7 @@ describe('.invoke', function() {
     Base.use(generators());
     base = new Base();
   });
-  
+
   describe('invoke generators', function(cb) {
     it('should invoke an instance', function(cb) {
       base.register('foo', function(app) {
@@ -150,7 +150,7 @@ describe('.invoke', function() {
 
       base.getGenerator('abc');
     });
-    
+
     it('should extend with a generator invoked from node_modules by alias', function(cb) {
       base.register('abc', function(app) {
         assert(!app.tasks.a);
@@ -220,7 +220,7 @@ describe('.invoke', function() {
 
       base.getGenerator('foo');
     });
-    
+
     it('should invoke a sub-generator on the base instance', function(cb) {
       base.register('foo', function(app) {
         app.invoke('bar.sub');

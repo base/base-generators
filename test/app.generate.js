@@ -258,7 +258,9 @@ describe('.generate', function() {
         cb();
       });
     });
+  });
 
+  describe('default tasks', function(cb) {
     it('should run the default task on the default generator', function(cb) {
       var count = 0;
       base.register('default', function(app) {
@@ -290,7 +292,9 @@ describe('.generate', function() {
         cb();
       });
     });
+  });
 
+  describe('specified tasks', function(cb) {
     it('should run the specified task on a registered generator', function(cb) {
       var count = 0;
       base.register('foo', function(app) {

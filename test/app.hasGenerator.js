@@ -22,7 +22,7 @@ describe('.hasGenerator', function() {
     base.register('foo', function(app) {
       app.register('bar', function() {});
     });
-   
+
     assert(!base.hasGenerator('bar'));
   });
 
@@ -30,7 +30,7 @@ describe('.hasGenerator', function() {
     base.register('foo', function(app) {
       app.register('bar', function() {});
     });
-   
+
     assert(base.hasGenerator('foo.bar'));
   });
 
@@ -38,7 +38,7 @@ describe('.hasGenerator', function() {
     base.register('foo', function(app) {
       app.register('bar', function() {});
     });
-   
+
     assert(!base.hasGenerator('foo.baz'));
     assert(!base.hasGenerator('foo.bar.baz'));
   });

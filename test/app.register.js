@@ -92,12 +92,13 @@ describe('.register', function() {
       assert.equal(bar.env.alias, 'bar');
     });
 
-    it('should get a sub-generator from a generator registered as a function', function() {
+    it('should get a nested sub-generator from a generator registered as a function', function() {
       base.register('foo', function(foo) {
         foo.register('bar', function(bar) {
           bar.task('something', function() {});
         });
       });
+
       var bar = base.getGenerator('foo.bar');
       assert(bar);
       assert(bar.tasks);

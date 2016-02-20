@@ -13,7 +13,7 @@ describe('.generateEach', function() {
     base = new Base();
     base.use(option());
   });
-  
+
   describe('generators', function(cb) {
     it('should throw an error when a generator is not found', function(cb) {
       base.generateEach('fdsslsllsfjssl', function(err) {
@@ -144,7 +144,7 @@ describe('.generateEach', function() {
           next();
         });
       });
-      
+
       base.generateEach('foo:abc', function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
@@ -175,7 +175,7 @@ describe('.generateEach', function() {
           next();
         });
       });
-      
+
       base.generateEach('foo:a,b,c', function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
@@ -256,7 +256,7 @@ describe('.generateEach', function() {
           });
         });
       });
-      
+
       base.generateEach('foo.bar:a,b,c', function(err) {
         if (err) return cb(err);
         assert.equal(count, 3);
@@ -289,7 +289,7 @@ describe('.generateEach', function() {
           });
         });
       });
-      
+
       base.register('qux', function(app) {
         app.register('fez', function(fez) {
           fez.task('default', function(next) {
@@ -313,7 +313,7 @@ describe('.generateEach', function() {
           });
         });
       });
-      
+
       base.generateEach(['foo.bar:a,b,c', 'qux.fez:a,b,c'], function(err) {
         if (err) return cb(err);
         assert.equal(count, 6);
