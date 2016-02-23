@@ -80,16 +80,13 @@ module.exports = function generators(config) {
 
     this.mixin('resolve', function(name, options) {
       var opts = util.extend({}, this.options, options);
-
       if (utils.isAbsolute(name)) {
         return this.resolveConfigpath(name, opts);
       }
-
       var generator = this.apps.get(name);
       if (generator) {
         return generator.path;
       }
-
       if (opts.cwd) {
         return this.resolveConfigpath(path.resolve(opts.cwd, name), opts);
       }
@@ -243,7 +240,6 @@ module.exports = function generators(config) {
             || this.apps.alias(alias)
             || this.apps.name(alias)
         }
-
       } else {
         app = this.getSubGenerator(name, aliasFn);
       }
@@ -251,6 +247,7 @@ module.exports = function generators(config) {
       if (app && app.path && !app.env) {
         this.register(name, app.path);
         app = this.generators[name];
+        this.invoke(app);
       }
 
       if (app && app.env) {
@@ -365,7 +362,6 @@ module.exports = function generators(config) {
           return generator;
         }
       }
-
       return util.tryResolve(name, {
         configfile: this.configfile
       });
