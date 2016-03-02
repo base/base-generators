@@ -357,7 +357,7 @@ var foo = app.getGenerator('foo');
 var baz = app.getGenerator('foo.bar.baz');
 ```
 
-### [.getSubGenerator](index.js#L271)
+### [.getSubGenerator](index.js#L272)
 
 Get sub-generator `name`, using dot-notation for nested generators.
 
@@ -368,9 +368,9 @@ app.getSubGenerator('foo.bar.baz')'
 **Params**
 
 * `name` **{String}**: The property-path of the generator to get    
-* `aliasFn` **{Function}**
+* `aliasFn` **{Function}**    
 
-### [.findGenerator](index.js#L307)
+### [.findGenerator](index.js#L308)
 
 Find generator `name`, by first searching the cache,
 then searching the cache of the `base` generator,
@@ -379,10 +379,10 @@ and last searching for a globally installed generator.
 **Params**
 
 * `name` **{String}**    
-* `aliasFn` **{Function}**: Optionally supply a rename function.    
-* `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.
+* `options` **{Function}**: Optionally supply a rename function on `options.toAlias`    
+* `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.  
 
-### [.globalGenerator](index.js#L355)
+### [.globalGenerator](index.js#L356)
 
 Search for globally installed generator `name`. If found, then generator
 is registered and returned, otherwise `undefined` is returned.
@@ -390,10 +390,9 @@ is registered and returned, otherwise `undefined` is returned.
 **Params**
 
 * `name` **{String}**    
-* `returns` **{Object|undefined}**
+* `returns` **{Object|undefined}**  
 
-### [.invoke](index.js#L383)
-
+### [.invoke](index.js#L384)
 Invoke the given generator in the context of (`this`) the current instance.
 
 **Params**
@@ -407,7 +406,7 @@ Invoke the given generator in the context of (`this`) the current instance.
 base.invoke('foo');
 ```
 
-### [.extendWith](index.js#L420)
+### [.extendWith](index.js#L421)
 
 Alias for `.invoke`, Extend the current generator instance with the settings of other generators.
 
@@ -427,7 +426,7 @@ base.extendWith('foo');
 base.extendWith(['foo', 'bar', 'baz']);
 ```
 
-### [.generate](index.js#L458)
+### [.generate](index.js#L459)
 
 Run a `generator` and `tasks`, calling the given `callback` function upon completion.
 
@@ -465,7 +464,7 @@ base.generate(function(err) {
 });
 ```
 
-### [.generateEach](index.js#L539)
+### [.generateEach](index.js#L540)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -484,7 +483,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.alias](index.js#L563)
+### [.alias](index.js#L577)
 
 Create a generator alias from the given `name`.
 
@@ -494,7 +493,7 @@ Create a generator alias from the given `name`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the alias.
 
-### [.fullname](index.js#L583)
+### [.fullname](index.js#L595)
 
 Create a generator's full name from the given `alias`.
 
@@ -504,7 +503,7 @@ Create a generator's full name from the given `alias`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the full name.
 
-### [.resolveConfigpath](index.js#L600)
+### [.resolveConfigpath](index.js#L612)
 
 Return the absolute filepath to a generator's main file.
 
@@ -514,27 +513,27 @@ Return the absolute filepath to a generator's main file.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the full name.
 
-### [.configname](index.js#L618)
+### [.configname](index.js#L630)
 
 Getter/setter for defining the `configname` name to use for lookups.
 By default `configname` is set to `generator.js`.
 
-### [.configfile](index.js#L640)
+### [.configfile](index.js#L652)
 
 Getter/setter for defining the `configfile` name to use for lookups.
 By default `configfile` is set to `generator.js`.
 
-### [.configpath](index.js#L658)
+### [.configpath](index.js#L670)
 
 Getter/setter for defining the `configpath` name to use for lookups.
 By default `configpath` is set to `generator.js`.
 
-### [.modulename](index.js#L676)
+### [.modulename](index.js#L688)
 
 Getter/setter for defining the `modulename` name to use for lookups.
 By default `modulename` is set to `generate`.
 
-### [.base](index.js#L703)
+### [.base](index.js#L715)
 
 Getter/setter for the `base` (or shared) instance of `generate`.
 
@@ -564,7 +563,7 @@ Return true if the given `name` exists on the
 * [base](https://www.npmjs.com/package/base): base is the foundation for creating modular, unit testable and highly pluggable node.js applications, starting… [more](https://www.npmjs.com/package/base) | [homepage](https://github.com/node-base/base)
 * [base-fs](https://www.npmjs.com/package/base-fs): base-methods plugin that adds vinyl-fs methods to your 'base' application for working with the file… [more](https://www.npmjs.com/package/base-fs) | [homepage](https://github.com/jonschlinkert/base-fs)
 * [base-pipeline](https://www.npmjs.com/package/base-pipeline): base-methods plugin that adds pipeline and plugin methods for dynamically composing streaming plugin pipelines. | [homepage](https://github.com/jonschlinkert/base-pipeline)
-* [base-plugins](https://www.npmjs.com/package/base-plugins): Upgrade's plugin support in base-methods to allow plugins to be called any time after init. | [homepage](https://github.com/jonschlinkert/base-plugins)
+* [base-plugins](https://www.npmjs.com/package/base-plugins): Upgrade's plugin support in base applications to allow plugins to be called any time after… [more](https://www.npmjs.com/package/base-plugins) | [homepage](https://github.com/jonschlinkert/base-plugins)
 * [base-task](https://www.npmjs.com/package/base-task): base plugin that provides a very thin wrapper around [https://github.com/doowb/composer](https://github.com/doowb/composer) for adding task methods to… [more](https://www.npmjs.com/package/base-task) | [homepage](https://github.com/node-base/base-task)
 * [composer](https://www.npmjs.com/package/composer): API-first task runner with three methods: task, run and watch. | [homepage](https://github.com/doowb/composer)
 * [gulp](https://www.npmjs.com/package/gulp): The streaming build system | [homepage](http://gulpjs.com)
@@ -609,4 +608,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/base-generator
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on February 23, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 02, 2016._
