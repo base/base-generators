@@ -124,7 +124,7 @@ describe('env', function() {
     it('should try to resolve a path passed as the second arg', function() {
       base.createEnv('foo', fixtures('generator.js'));
       assert.equal(base.env.alias, 'foo');
-      assert.equal(base.env.name, 'generate-foo');
+      assert.equal(base.env.name, 'foo');
     });
 
     it('should try to resolve a path passed as the second arg', function() {

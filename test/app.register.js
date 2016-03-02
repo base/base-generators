@@ -225,6 +225,19 @@ describe('.register', function() {
     });
   });
 
+  describe('options.runInContext', function() {
+    it('should register a generator and invoke it in the context of another generator', function() {
+      base.register('foo', new Base());
+      var foo = base.getGenerator('foo');
+      foo.task('abc', function() {});
+
+      base.register('bar', function() {}, { runInContext: foo });
+      var bar = base.getGenerator('bar');
+
+      assert(bar.tasks.hasOwnProperty('abc'));
+    });
+  });
+
   describe('instance', function() {
     it('should register an instance', function() {
       base.register('base-inst', new Base());
