@@ -127,8 +127,8 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('register', function(name, fn) {
-      var gen = this.generators.set(name, fn, this);
+    this.mixin('register', function(name, fn, options) {
+      var gen = this.generators.set(name, fn, this, options);
       var path = gen.env.path;
       if (path && this.apps.files.indexOf(path) === -1) {
         this.apps.files.push(path);
@@ -157,12 +157,12 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('generator', function(name, fn) {
+    this.mixin('generator', function(name, fn, options) {
       if (arguments.length === 1 && typeof name === 'string') {
         var generator = this.getGenerator(name);
         if (generator) return generator;
       }
-      this.register(name, fn);
+      this.register(name, fn, options);
       return this.getGenerator(name);
     });
 
@@ -213,17 +213,16 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('getGenerator', function(name, aliasFn) {
+    this.mixin('getGenerator', function(name, options) {
       debug('getting generator "%s"', name);
 
-      if (typeof aliasFn !== 'function') {
-        aliasFn = this.toAlias.bind(this);
-      }
+      options = options || {};
+      var aliasFn = (options.toAlias || this.toAlias).bind(this);
 
       var app = this;
 
       function get(key) {
-        return app.generators[key] || app.base.generators[key];
+        return app.generators.get(key) || app.base.generators.get(key);
       }
 
       var isSubgenerator = name.indexOf('.') !== -1;
@@ -235,8 +234,10 @@ module.exports = function generators(config) {
         if (typeof app === 'undefined') {
           app = this.apps.alias(name)
             || this.apps.name(name)
+
             || this.apps.alias(fullname)
             || this.apps.name(fullname)
+
             || this.apps.alias(alias)
             || this.apps.name(alias)
         }
@@ -268,7 +269,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('getSubGenerator', function(name, aliasFn) {
+    this.mixin('getSubGenerator', function(name, options) {
       if (!~name.indexOf('.')) {
         return this.getGenerator.apply(this, arguments);
       }
@@ -280,7 +281,7 @@ module.exports = function generators(config) {
 
       while (++idx < len) {
         var key = props[idx];
-        app = app.findGenerator(key, aliasFn);
+        app = app.findGenerator(key, options);
         if (!app) {
           break;
         }
@@ -299,17 +300,17 @@ module.exports = function generators(config) {
      *
      * @name .findGenerator
      * @param {String} `name`
-     * @param {Function} `aliasFn` Optionally supply a rename function.
+     * @param {Function} `options` Optionally supply a rename function on `options.toAlias`
      * @return {Object|undefined} Returns the generator instance if found, or undefined.
      * @api public
      */
 
-    this.mixin('findGenerator', function(name, aliasFn) {
+    this.mixin('findGenerator', function(name, options) {
       debug('finding generator "%s"', name);
 
       // if sub-generator, look for it on the first resolved generator
       if (this.firstGen && this.firstGen.generators[name]) {
-        var sub = this.firstGen.getGenerator(name);
+        var sub = this.firstGen.getGenerator(name, options);
         if (sub) {
           return sub;
         }
@@ -317,8 +318,8 @@ module.exports = function generators(config) {
 
       // search for generator on the instance cache, then if not found
       // search for the generator on the base instance's cache
-      var generator = this.generators.get(name, aliasFn)
-        || this.base.generators.get(name, aliasFn);
+      var generator = this.generators.get(name, options)
+        || this.base.generators.get(name, options);
 
       // try searching in local and global node_modules
       if (!generator) {
@@ -331,7 +332,7 @@ module.exports = function generators(config) {
       if (!generator && name.indexOf(this.prefix) === -1) {
         var fullname = this.toFullname(name);
         if (name !== fullname) {
-          generator = this.findGenerator(fullname, aliasFn);
+          generator = this.findGenerator(fullname, options);
         }
       }
 
@@ -356,7 +357,7 @@ module.exports = function generators(config) {
       debug('getting global generator "%s"', name);
 
       var filepath = this.resolve(name, {cwd: util.gm});
-      if (utils.isGenerator(filepath, this.prefix)) {
+      if (this.isGeneratorPath(filepath, this.prefix)) {
         var generator = this.getGenerator(name);
         if (generator) {
           return generator;
@@ -550,6 +551,19 @@ module.exports = function generators(config) {
       }.bind(this), cb);
     });
 
+
+    /**
+     * Returns true if the given
+     */
+
+    this.mixin('isGeneratorPath', function(filepath) {
+      if (typeof filepath !== 'string') {
+        return false;
+      }
+      var basename = path.basename(path.dirname(filepath));
+      return basename.indexOf(this.prefix) !== -1;
+    });
+
     /**
      * Create a generator alias from the given `name`.
      *
@@ -562,9 +576,7 @@ module.exports = function generators(config) {
 
     this.mixin('toAlias', function(name, options) {
       var opts = util.extend({}, config, this.options, options);
-      if (!opts.prefix && !opts.modulename) {
-        opts.prefix = this.prefix;
-      }
+      opts.prefix = opts.prefix || opts.modulename || this.prefix;
       var alias = util.toAlias(name, opts);
       debug('created alias "%s" for string "%s"', alias, name);
       return alias;
