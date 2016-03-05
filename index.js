@@ -38,7 +38,7 @@ module.exports = function generators(config) {
      * Plugins will only be registered once.
      */
 
-    this.mixin('initGenerators', function() {
+    this.define('initGenerators', function() {
       this.options = utils.extend({}, this.options, config);
 
       this.isGenerator = true;
@@ -78,7 +78,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('resolve', function(name, options) {
+    this.define('resolve', function(name, options) {
       var opts = util.extend({}, this.options, options);
       if (utils.isAbsolute(name)) {
         return this.resolveConfigpath(name, opts);
@@ -102,7 +102,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('registerConfig', function(name, configfile, options) {
+    this.define('registerConfig', function(name, configfile, options) {
       var opts = util.extend({ cwd: this.cwd }, options);
 
       debug('registering configfile "%s", at cwd: "%s"', name, opts.cwd);
@@ -127,7 +127,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('register', function(name, fn, options) {
+    this.define('register', function(name, fn, options) {
       var gen = this.generators.set(name, fn, this, options);
       var path = gen.env.path;
       if (path && this.apps.files.indexOf(path) === -1) {
@@ -157,7 +157,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('generator', function(name, fn, options) {
+    this.define('generator', function(name, fn, options) {
       if (arguments.length === 1 && typeof name === 'string') {
         var generator = this.getGenerator(name);
         if (generator) return generator;
@@ -189,7 +189,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('hasGenerator', function(name) {
+    this.define('hasGenerator', function(name) {
       var objectPath = util.toGeneratorPath(name);
       if (this.has(objectPath)) {
         return objectPath;
@@ -213,22 +213,33 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('getGenerator', function(name, options) {
+    this.define('getGenerator', function(name, options) {
       debug('getting generator "%s"', name);
 
       options = options || {};
       var aliasFn = (options.toAlias || this.toAlias).bind(this);
 
+      var fullname = this.toFullname(name);
+      var alias = aliasFn(name);
+      var self = this;
       var app = this;
 
       function get(key) {
-        return app.generators.get(key) || app.base.generators.get(key);
+        return self.generators.get(key) || self.base.generators.get(key);
+      }
+
+      function match(key) {
+        return name === key || fullname === key || alias === key;
+      }
+
+      function cacheApp(app) {
+        if (self && self.env) {
+          self.fragment.set('name', name, self);
+        }
       }
 
       var isSubgenerator = name.indexOf('.') !== -1;
       if (!isSubgenerator) {
-        var fullname = this.toFullname(name);
-        var alias = aliasFn(name);
 
         app = get(name) || get(alias) || get(fullname);
         if (typeof app === 'undefined') {
@@ -251,10 +262,28 @@ module.exports = function generators(config) {
         this.invoke(app);
       }
 
-      if (app && app.env) {
-        this.fragment.set('name', name, app);
-        return app;
+      cacheApp(app);
+      if (app) return app;
+
+      for (var key in this.generators) {
+        if (match(key) || match(aliasFn(key)) || match(this.toFullname(key))) {
+          app = this.getGenerator(key);
+          break;
+        }
       }
+
+      cacheApp(app);
+      if (app) return app;
+
+      for (var key in this.base.generators) {
+        if (match(key) || match(aliasFn(key)) || match(this.toFullname(key))) {
+          app = this.base.getGenerator(key);
+          break;
+        }
+      }
+
+      cacheApp(app);
+      if (app) return app;
     });
 
     /**
@@ -269,7 +298,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('getSubGenerator', function(name, options) {
+    this.define('getSubGenerator', function(name, options) {
       if (!~name.indexOf('.')) {
         return this.getGenerator.apply(this, arguments);
       }
@@ -305,7 +334,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('findGenerator', function(name, options) {
+    this.define('findGenerator', function(name, options) {
       debug('finding generator "%s"', name);
 
       // if sub-generator, look for it on the first resolved generator
@@ -353,7 +382,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('globalGenerator', function(name) {
+    this.define('globalGenerator', function(name) {
       debug('getting global generator "%s"', name);
 
       var filepath = this.resolve(name, {cwd: util.gm});
@@ -381,7 +410,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('invoke', function(app) {
+    this.define('invoke', function(app) {
       if (Array.isArray(app)) {
         return app.forEach(this.invoke.bind(this));
       }
@@ -418,7 +447,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('extendWith', function(app) {
+    this.define('extendWith', function(app) {
       this.invoke(app);
       return this;
     });
@@ -456,7 +485,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('generate', function(name, tasks, cb) {
+    this.define('generate', function(name, tasks, cb) {
       if (typeof name === 'function') {
         cb = name;
         name = 'default';
@@ -537,7 +566,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('generateEach', function(tasks, cb) {
+    this.define('generateEach', function(tasks, cb) {
       if (Array.isArray(tasks) && tasks.length === 0) {
         tasks = ['default'];
       }
@@ -556,7 +585,7 @@ module.exports = function generators(config) {
      * Returns true if the given
      */
 
-    this.mixin('isGeneratorPath', function(filepath) {
+    this.define('isGeneratorPath', function(filepath) {
       if (typeof filepath !== 'string') {
         return false;
       }
@@ -574,7 +603,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('toAlias', function(name, options) {
+    this.define('toAlias', function(name, options) {
       var opts = util.extend({}, config, this.options, options);
       opts.prefix = opts.prefix || opts.modulename || this.prefix;
       var alias = util.toAlias(name, opts);
@@ -592,7 +621,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('toFullname', function(alias, options) {
+    this.define('toFullname', function(alias, options) {
       var opts = util.extend({prefix: this.prefix}, config, this.options, options);
       var fullname = util.toFullname(alias, opts);
       debug('created fullname "%s" for alias "%s"', fullname, alias);
@@ -609,7 +638,7 @@ module.exports = function generators(config) {
      * @api public
      */
 
-    this.mixin('resolveConfigpath', function(filepath, options) {
+    this.define('resolveConfigpath', function(filepath, options) {
       var opts = util.extend({}, config, this.options, options);
       var file = this.apps.createEnv(filepath, opts);
       if (file) {
