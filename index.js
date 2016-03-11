@@ -214,6 +214,15 @@ module.exports = function generators(config) {
      */
 
     this.define('getGenerator', function(name, options) {
+      var generator = this._getGenerator.apply(this, arguments);
+      utils.sync('project', generator, this.base);
+      utils.sync('cwd', generator, this.base);
+      utils.sync('pkg', generator, this.base);
+      utils.sync('_argv', generator, this.base);
+      return generator;
+    });
+
+    this.define('_getGenerator', function(name, options) {
       debug('getting generator "%s"', name);
 
       options = options || {};
