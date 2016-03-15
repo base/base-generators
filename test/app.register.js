@@ -208,7 +208,6 @@ describe('.register', function() {
       foo.task('default', function() {});
       base.register('foo', foo);
       var generator = base.getGenerator('foo');
-      assert(generator.tasks);
       assert(generator.tasks.hasOwnProperty('default'));
     });
 

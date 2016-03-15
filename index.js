@@ -7,20 +7,18 @@
 
 'use strict';
 
-var path = require('path');
 var async = require('async');
 var debug = require('debug')('base:base-generators');
 var createApp = require('./lib/generator');
 var plugins = require('./lib/plugins');
 var tasks = require('./lib/tasks');
 var utils = require('./lib/utils');
-var count = 0;
 
 /**
  * Expose `generators`
  */
 
-module.exports = function(Ctor, config) {
+module.exports = function(Base, config) {
   config = config || {};
 
   return function plugin() {
@@ -43,7 +41,12 @@ module.exports = function(Ctor, config) {
 
     // create the `Generator` class
     if (typeof this.Generator === 'undefined') {
-      this.define('Generator', createApp('Generator', Ctor, config));
+      var App = createApp('Generator', Base, config);
+      function Generator() {
+        return App.apply(this, arguments);
+      }
+      App.extend(Generator);
+      this.define('Generator', App);
       this.define('constructor', this.constructor);
     }
 
@@ -121,12 +124,13 @@ module.exports = function(Ctor, config) {
       debug('setting generator "%s"', name);
 
       var generator = new this.Generator(name, val, options, this);
-      this.generators[generator.alias] = generator;
-      if (name !== generator.alias) {
+      var alias = generator.alias;
+      this.generators[alias] = generator;
+
+      if (alias !== name) {
         this.generators[name] = generator;
       }
-
-      this.emit('generator', generator.alias, generator);
+      this.emit('generator', alias, generator);
       return generator;
     });
 
@@ -452,7 +456,6 @@ module.exports = function(Ctor, config) {
         this.generate.apply(this, args);
       }.bind(this), cb);
     });
-
 
     /**
      * Create a generator alias from the given `name`.
