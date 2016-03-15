@@ -4,10 +4,12 @@ require('mocha');
 var path = require('path');
 var assert = require('assert');
 var Base = require('base');
-var env = require('../lib/env');
+var env = require('base-env');
+var plugins = require('base-plugins');
 var generators = require('..');
 var base;
 
+Base.use(plugins());
 var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 
 describe('env', function() {
@@ -38,7 +40,7 @@ describe('env', function() {
 
   describe('createEnv paths', function() {
     beforeEach(function() {
-      Base.use(generators());
+      Base.use(generators(Base));
       base = new Base();
     });
 
@@ -61,9 +63,9 @@ describe('env', function() {
     });
 
     describe('alias and path', function() {
-      it('should set the name to the basename of a generator\'s dirname', function() {
+      it('should set the env.name using the given name', function() {
         base.createEnv('foo', 'generate-foo/generator.js');
-        assert.equal(base.env.name, 'generate-foo');
+        assert.equal(base.env.name, 'foo');
       });
 
       it('should not change the name when the second arg is a function', function() {
@@ -78,7 +80,7 @@ describe('env', function() {
 
   describe('createEnv', function() {
     beforeEach(function() {
-      Base.use(generators());
+      Base.use(generators(Base));
       base = new Base();
     });
 
@@ -130,15 +132,16 @@ describe('env', function() {
     it('should try to resolve a path passed as the second arg', function() {
       base.createEnv('foo', 'generate-foo/generator.js');
       assert.equal(base.env.alias, 'foo');
-      assert.equal(base.env.name, 'generate-foo');
+      assert.equal(base.env.name, 'foo');
     });
 
     it('should throw an error when the path is not resolved', function(cb) {
       try {
         base.createEnv('foo', fixtures('whatever.js'));
+        base.env.path;
         cb(new Error('expected an error'));
       } catch (err) {
-        assert.equal(err.message, 'cannot find generator: ' + fixtures('whatever.js'));
+        assert.equal(err.message, 'Cannot find module \'' + fixtures('whatever.js') + '\'');
         cb();
       }
     });

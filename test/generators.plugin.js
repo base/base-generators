@@ -10,7 +10,7 @@ var base;
 describe('base-generators', function() {
   describe('plugin', function() {
     it('should register as a plugin on `base`', function() {
-      Base.use(generators());
+      Base.use(generators(Base));
       base = new Base();
       assert.equal(base.isRegistered('base-generators'), true);
     });
@@ -38,7 +38,7 @@ describe('base-generators', function() {
 
   describe('cwd', function() {
     beforeEach(function() {
-      Base.use(generators());
+      Base.use(generators(Base));
       base = new Base();
     });
 

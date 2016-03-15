@@ -10,7 +10,7 @@ var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 
 describe('.generator', function() {
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
     base = new Base();
   });
 
@@ -63,7 +63,7 @@ describe('.generator', function() {
 
   it('should get a nested generator', function() {
     base.register('abc', function(abc) {
-      abc.register('def', function() {});
+      abc.register('def', function(def) {});
     });
 
     var generator = base.getGenerator('abc.def');

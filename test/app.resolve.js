@@ -10,7 +10,7 @@ var base;
 
 var fixtures = path.resolve.bind(path, __dirname, 'fixtures/generators');
 
-describe('.resolve', function() {
+describe.skip('.resolve', function() {
   beforeEach(function() {
     base = new Base();
     base.use(generators());

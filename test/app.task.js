@@ -8,7 +8,7 @@ var base;
 
 describe('.generate', function() {
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
     base = new Base();
   });
 

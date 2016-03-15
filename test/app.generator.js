@@ -12,17 +12,34 @@ var fixtures = path.resolve.bind(path, __dirname, 'fixtures');
 
 describe('.generator', function() {
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
     Base.use(option());
     base = new Base();
+
+    base.option('alias', function(key) {
+      return key.replace(/^generate-(.*)/, '$1');
+    });
   });
 
   describe('generator', function() {
     it('should get a generator by alias', function() {
-      var gen = base.getGenerator('mocha');
+      base.register('generate-foo', require('generate-foo'));
+      var gen = base.getGenerator('foo');
       assert(gen);
-      assert.equal(gen.env.name, 'generate-mocha');
-      assert.equal(gen.env.alias, 'mocha');
+      assert.equal(gen.env.name, 'generate-foo');
+      assert.equal(gen.env.alias, 'foo');
+    });
+
+    it('should get a generator using a custom lookup function', function() {
+      var gen = base.getGenerator('foo', {
+        lookup: function(key) {
+          return ['generate-' + key, 'verb-' + key + '-generator', key];
+        },
+      });
+
+      assert(gen);
+      assert.equal(gen.env.name, 'generate-foo');
+      assert.equal(gen.env.alias, 'foo');
     });
   });
 
@@ -179,7 +196,7 @@ describe('.generator', function() {
       assert.deepEqual(base.generators.one, one);
     });
 
-    it('should register a Generate instance from a file path', function() {
+    it('should register an instance from a file path', function() {
       var two = base.generator('two', fixtures('two/generator.js'));
       assert(base.generators.hasOwnProperty('two'));
       assert(typeof base.generators.two === 'object');

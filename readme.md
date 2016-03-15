@@ -245,7 +245,7 @@ Checked off as they're added:
 
 ## API
 
-### [.resolve](index.js#L81)
+### [.resolve](index.js#L55)
 
 Attempts to find a generator with the given `name` and `options`.
 
@@ -277,7 +277,7 @@ Register configfile with the given `name` and `options`.
 * `options` **{Object}**
 * `returns` **{object}**
 
-### [.register](index.js#L130)
+### [.register](index.js#L104)
 
 Register generator `name` with the given `fn`.
 
@@ -296,7 +296,7 @@ base.register('foo', function(app, base) {
 });
 ```
 
-### [.generator](index.js#L160)
+### [.generator](index.js#L134)
 
 Register generator `name` with the given `fn`, or get generator `name` if only one argument is passed. This method calls the `.getGenerator` method but goes one step further: if `name` is not already registered, it will try to resolve and register the generator before returning it (or `undefined` if unsuccessful).
 
@@ -315,7 +315,7 @@ base.generator('foo', function(app, base) {
 });
 ```
 
-### [.hasGenerator](index.js#L192)
+### [.hasGenerator](index.js#L166)
 
 Return true if the given `name` exists on the `generators` object. Dot-notation may be used to check for sub-generators.
 
@@ -339,7 +339,7 @@ base.hasGenerator('foo.bar');
 //=> true
 ```
 
-### [.getGenerator](index.js#L216)
+### [.getGenerator](index.js#L190)
 
 Get generator `name` from `app.generators`. Dot-notation may be used to get a sub-generator.
 
@@ -357,20 +357,7 @@ var foo = app.getGenerator('foo');
 var baz = app.getGenerator('foo.bar.baz');
 ```
 
-### [.getSubGenerator](index.js#L301)
-
-Get sub-generator `name`, using dot-notation for nested generators.
-
-```js
-app.getSubGenerator('foo.bar.baz')'
-```'
-
-**Params**
-
-* `name` **{String}**: The property-path of the generator to get    
-* `aliasFn` **{Function}**    
-
-### [.findGenerator](index.js#L337)
+### [.findGenerator](index.js#L215)
 
 Find generator `name`, by first searching the cache,
 then searching the cache of the `base` generator,
@@ -378,27 +365,28 @@ and last searching for a globally installed generator.
 
 **Params**
 
-* `name` **{String}**    
-* `options` **{Function}**: Optionally supply a rename function on `options.toAlias`    
-* `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.  
+* `name` **{String}**
+* `options` **{Function}**: Optionally supply a rename function on `options.toAlias`
+* `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.
 
-### [.globalGenerator](index.js#L385)
+### [.globalGenerator](index.js#L230)
 
 Search for globally installed generator `name`. If found, then generator
 is registered and returned, otherwise `undefined` is returned.
 
 **Params**
 
-* `name` **{String}**    
-* `returns` **{Object|undefined}**  
+* `name` **{String}**
+* `returns` **{Object|undefined}**
 
-### [.invoke](index.js#L413)
+### [.invoke](index.js#L258)
+
 Invoke the given generator in the context of (`this`) the current instance.
 
 **Params**
 
-* `app` **{String|Object}**: Generator name or instance.    
-* `returns` **{Object}**: Returns the instance for chaining.  
+* `app` **{String|Object}**: Generator name or instance.
+* `returns` **{Object}**: Returns the instance for chaining.
 
 **Example**
 
@@ -406,7 +394,7 @@ Invoke the given generator in the context of (`this`) the current instance.
 base.invoke('foo');
 ```
 
-### [.extendWith](index.js#L450)
+### [.extendWith](index.js#L295)
 
 Alias for `.invoke`, Extend the current generator instance with the settings of other generators.
 
@@ -426,7 +414,7 @@ base.extendWith('foo');
 base.extendWith(['foo', 'bar', 'baz']);
 ```
 
-### [.generate](index.js#L488)
+### [.generate](index.js#L333)
 
 Run a `generator` and `tasks`, calling the given `callback` function upon completion.
 
@@ -464,7 +452,7 @@ base.generate(function(err) {
 });
 ```
 
-### [.generateEach](index.js#L569)
+### [.generateEach](index.js#L414)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -483,7 +471,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.alias](index.js#L606)
+### [.alias](index.js#L451)
 
 Create a generator alias from the given `name`.
 
@@ -493,7 +481,7 @@ Create a generator alias from the given `name`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the alias.
 
-### [.fullname](index.js#L624)
+### [.fullname](index.js#L469)
 
 Create a generator's full name from the given `alias`.
 
@@ -503,7 +491,7 @@ Create a generator's full name from the given `alias`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the full name.
 
-### [.resolveConfigpath](index.js#L641)
+### [.resolveConfigpath](index.js#L486)
 
 Return the absolute filepath to a generator's main file.
 
@@ -513,42 +501,25 @@ Return the absolute filepath to a generator's main file.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the full name.
 
-### [.configname](index.js#L659)
+### [.configname](index.js#L504)
 
 Getter/setter for defining the `configname` name to use for lookups.
 By default `configname` is set to `generator.js`.
 
-### [.configfile](index.js#L681)
+### [.configfile](index.js#L526)
 
 Getter/setter for defining the `configfile` name to use for lookups.
 By default `configfile` is set to `generator.js`.
 
-### [.configpath](index.js#L699)
+### [.configpath](index.js#L544)
 
 Getter/setter for defining the `configpath` name to use for lookups.
 By default `configpath` is set to `generator.js`.
 
-### [.modulename](index.js#L717)
+### [.modulename](index.js#L562)
 
 Getter/setter for defining the `modulename` name to use for lookups.
 By default `modulename` is set to `generate`.
-
-### [.base](index.js#L744)
-
-Getter/setter for the `base` (or shared) instance of `generate`.
-
-When a generator is registered, the current instance (`this`) is
-passed as the "parent" instance to the generator. The `base` getter
-ensures that the `base` instance is always the firstGen instance_.
-
-**Example**
-
-```js
-app.register('foo', function(app, base) {
-  // "app" is a private instance created for "foo"
-  // "base" is a shared instance, also accessible using `app.base`
-});
-```
 
 Return true if the given `name` exists on the
 `app.tasks` object.
@@ -608,4 +579,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/base-generator
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 04, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 11, 2016._

@@ -9,7 +9,7 @@ var base;
 
 describe('.tasks plugin', function() {
   it('should register as a plugin', function() {
-    Base.use(generators());
+    Base.use(tasks());
     var base = new Base();
     assert(base.registered.hasOwnProperty('base-generators-tasks'));
   });
@@ -35,7 +35,7 @@ describe('.tasks plugin', function() {
 
 describe('tasks', function() {
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
     base = new Base();
   });
 
@@ -52,12 +52,12 @@ describe('tasks', function() {
 
   describe('hasGenerator', function() {
     it('should return true if a task exists', function() {
-      base.generator('foo', function() {});
-      assert(base.hasGenerator('foo'));
+      base.register('foo', function() {});
+      assert(base.getGenerator('foo'));
     });
 
     it('should return false if a task does not exist', function() {
-      assert(!base.hasGenerator('bar'));
+      assert(!base.getGenerator('bar'));
     });
   });
 

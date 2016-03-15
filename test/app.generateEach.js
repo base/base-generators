@@ -9,7 +9,7 @@ var base;
 
 describe('.generateEach', function() {
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
     base = new Base();
     base.use(option());
   });
@@ -28,7 +28,7 @@ describe('.generateEach', function() {
       base.option('cwd', 'foo/bar/baz');
       base.generateEach('sflsjljskksl', function(err) {
         assert(err);
-        assert.equal('Cannot find generator: "sflsjljskksl" in "foo/bar/baz/generator.js"', err.message);
+        assert.equal('Cannot find generator: "sflsjljskksl" in "foo/bar/baz"', err.message);
         cb();
       });
     });

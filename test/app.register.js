@@ -12,61 +12,13 @@ var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 
 describe('.register', function() {
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
     base = new Base();
     base.use(option());
   });
 
-  describe('configfile', function() {
-    it('should expose a configfile getter/setter', function() {
-      assert.equal(typeof base.configfile, 'string');
-    });
-
-    it('should set configfile to generator.js by default', function() {
-      assert.equal(base.configfile, 'generator.js');
-    });
-
-    it('should set configfile', function() {
-      base.configfile = 'foo.js';
-      assert.equal(base.configfile, 'foo.js');
-    });
-  });
-
-  describe('configname', function() {
-    it('should expose a configname getter/setter', function() {
-      assert.equal(typeof base.configname, 'string');
-    });
-
-    it('should set configname to generator by default', function() {
-      assert.equal(base.configname, 'generator');
-    });
-
-    it('should set configname', function() {
-      base.configname = 'foo';
-      assert.equal(base.configname, 'foo');
-    });
-  });
-
-  describe('configpath', function() {
-    it('should expose a configpath getter/setter', function() {
-      assert.equal(typeof base.configpath, 'string');
-    });
-
-    it('should use configfile as basename of configpath', function() {
-      base.cwd = __dirname;
-      base.configfile = 'whatever.js';
-      assert.equal(path.basename(base.configpath), 'whatever.js');
-    });
-
-    it('should resolve configpath from app.cwd and app.configfile', function() {
-      base.cwd = __dirname;
-      base.configfile = 'whatever.js';
-      assert.equal(base.configpath, path.resolve(__dirname, base.configfile));
-    });
-  });
-
   describe('function', function() {
-    it('should get a generator registered as a function', function() {
+    it('should register a generator a function', function() {
       base.register('foo', function() {});
       var foo = base.getGenerator('foo');
       assert(foo);
@@ -188,8 +140,9 @@ describe('.register', function() {
       });
 
       base.register('base-abc-xyz', function() {});
-      assert(base.generators.hasOwnProperty('base-abc-xyz'));
-      assert.equal(base.generators['base-abc-xyz'].env.alias, 'xyz');
+      var xyz = base.getGenerator('xyz');
+      assert(xyz);
+      assert.equal(xyz.env.alias, 'xyz');
     });
   });
 
@@ -219,22 +172,9 @@ describe('.register', function() {
         base.register('not-exposed', require(fixtures('not-exposed.js')));
         cb(new Error('expected an error'));
       } catch (err) {
-        assert.equal(err.message, 'generator instances must be exposed with module.exports');
+        assert.equal(err.message, 'Cannot find module \'/Users/jonschlinkert/dev/base/base-generators-next/node_modules/not-exposed\'');
         cb();
       }
-    });
-  });
-
-  describe('options.runInContext', function() {
-    it('should register a generator and invoke it in the context of another generator', function() {
-      base.register('foo', new Base());
-      var foo = base.getGenerator('foo');
-      foo.task('abc', function() {});
-
-      base.register('bar', function() {}, { runInContext: foo });
-      var bar = base.getGenerator('bar');
-
-      assert(bar.tasks.hasOwnProperty('abc'));
     });
   });
 
@@ -282,9 +222,12 @@ describe('.register', function() {
 
     it('should get tasks from sub-generators registered as an instance', function() {
       var foo = new Base();
+
+      foo.options.isFoo = true;
       foo.register('bar', function(bar) {
         bar.task('whatever', function() {});
       });
+
       base.register('foo', foo);
       var generator = base.getGenerator('foo.bar');
       assert(generator.tasks);

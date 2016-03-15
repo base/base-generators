@@ -6,6 +6,7 @@ var path = require('path');
 var assert = require('assert');
 var gm = require('global-modules');
 var commands = require('spawn-commands');
+var option = require('base-option');
 var Base = require('base');
 var utils = require('generator-util');
 var generators = require('..');
@@ -30,14 +31,20 @@ describe('.extendWith', function() {
   });
 
   beforeEach(function() {
-    Base.use(generators());
+    Base.use(generators(Base));
+    Base.use(option());
+
     base = new Base();
+    base.option('alias', function(name) {
+      return name.replace(/^generate-/, '');
+    });
   });
 
   it('should get a named generator', function(cb) {
+    var count = 0;
     base.register('foo', function(app) {
       app.extendWith('bar');
-      cb();
+      count++;
     });
 
     base.register('bar', function(app) {
@@ -47,6 +54,8 @@ describe('.extendWith', function() {
     });
 
     base.getGenerator('foo');
+    assert.equal(count, 1);
+    cb();
   });
 
   it('should extend a generator with a named generator', function(cb) {
@@ -100,7 +109,7 @@ describe('.extendWith', function() {
   });
 
   describe('invoke generators', function(cb) {
-    it('should invoke an instance', function(cb) {
+    it('should extend with a generator instance', function(cb) {
       base.register('foo', function(app) {
         var bar = app.getGenerator('bar');
         app.extendWith(bar);
@@ -112,6 +121,7 @@ describe('.extendWith', function() {
       });
 
       base.register('bar', function(app) {
+        app.isBar = true;
         app.task('a', function() {});
         app.task('b', function() {});
         app.task('c', function() {});
@@ -182,6 +192,7 @@ describe('.extendWith', function() {
         app.task('c', function() {});
       });
 
+      var qux = base.getGenerator('qux');
       base.getGenerator('foo');
     });
 
@@ -217,22 +228,6 @@ describe('.extendWith', function() {
       base.getGenerator('abc');
     });
 
-    it('should extend with a generator invoked from node_modules by alias', function(cb) {
-      base.register('abc', function(app) {
-        assert(!app.tasks.a);
-        assert(!app.tasks.b);
-        assert(!app.tasks.c);
-
-        app.extendWith('foo');
-        assert(app.tasks.a);
-        assert(app.tasks.b);
-        assert(app.tasks.c);
-        cb();
-      });
-
-      base.getGenerator('abc');
-    });
-
     it('should extend with a generator invoked from global modules by name', function(cb) {
       base.register('zzz', function(app) {
         assert(!app.tasks.a);
@@ -250,6 +245,8 @@ describe('.extendWith', function() {
     });
 
     it('should extend with a generator invoked from global modules by alias', function(cb) {
+      base.register('generate-bar');
+
       base.register('zzz', function(app) {
         assert(!app.tasks.a);
         assert(!app.tasks.b);
@@ -328,6 +325,8 @@ describe('.extendWith', function() {
     });
 
     it('should invoke a sub-generator from node_modules by alias', function(cb) {
+      base.register('generate-foo');
+
       base.register('abc', function(app) {
         assert(!app.tasks.a);
         assert(!app.tasks.b);
