@@ -24,29 +24,24 @@ module.exports = function(Base, config) {
   return function plugin() {
     if (this.isRegistered('base-generators')) return;
 
+    // create the `Generator` class
     if (typeof this.generators === 'undefined') {
       this.generators = {};
-    }
 
-    // load plugins
-    if (typeof this.task !== 'function') {
+      this.isGenerator = true;
       this.use(plugins.task());
-    }
+      this.use(plugins.plugin());
+      this.use(plugins.cwd());
+      this.use(plugins.env());
+      this.use(tasks());
 
-    this.isGenerator = true;
-    this.use(plugins.plugin());
-    this.use(plugins.cwd());
-    this.use(plugins.env());
-    this.use(tasks());
-
-    // create the `Generator` class
-    if (typeof this.Generator === 'undefined') {
       var App = createApp('Generator', Base, config);
       function Generator() {
         return App.apply(this, arguments);
       }
       App.extend(Generator);
-      this.define('Generator', App);
+
+      this.define('Generator', Generator);
       this.define('constructor', this.constructor);
     }
 
@@ -207,16 +202,25 @@ module.exports = function(Base, config) {
      * @api public
      */
 
-    this.define('findGenerator', function(name, options) {
+    this.define('findGenerator', function(name, opts) {
       debug('finding generator "%s"', name);
-      if (typeof name === 'string') {
-        return this._findGenerator(name, options) || this.base._findGenerator(name, options);
+      if (typeof name !== 'string') {
+        return name;
       }
-      return name;
+      var app = this._findGenerator(name, opts);
+      // if no app, check the `base` instance
+      if (typeof app === 'undefined' && this.parent) {
+        app = this.base._findGenerator(name, opts);
+      }
+      // if no app, check `node_modules` or the file system
+      if (!app && utils.exists(name)) {
+        return this.register(name, opts);
+      }
+      return app;
     });
 
     /**
-     *
+     * Private method used by `.findGenerator`
      */
 
     this.define('_findGenerator', function(name, options) {
@@ -225,31 +229,28 @@ module.exports = function(Base, config) {
       }
       var opts = utils.extend({}, this.options, options);
       if (typeof opts.lookup === 'function') {
-        var fn = opts.lookup;
-        delete opts.lookup;
-        return this.lookupGenerator(name, opts, fn);
+        return this.lookupGenerator(name, opts, opts.lookup);
       }
+      return this.generators[name] || this.matchGenerator(name);
+    });
 
-      // simple lookup
-      var app = this.generators[name];
+    /**
+     * Iterate over `app.generators` and call `generator.isMatch(name)`
+     * on the given `name`.
+     *
+     * @param {String} `name`
+     * @return {Object|undefined} Returns a generator object if a match is found.
+     * @api public
+     */
 
-      // if not found, iterate over generators and check `key`
-      // against the generator's `.isMatch` function
-      if (typeof app === 'undefined') {
-        for (var key in this.generators) {
-          if (this.generators.hasOwnProperty(key)) {
-            var gen = this.generators[key];
-            if (gen.isMatch(name)) {
-              return gen;
-            }
-          }
+    this.define('matchGenerator', function(name) {
+      debug('matching generator "%s"', name);
+      for (var prop in this.generators) {
+        var app = this.generators[prop];
+        if (app.isMatch(name)) {
+          return app;
         }
       }
-      // check to see if `app` is module before returning
-      if (!app && utils.exists(name)) {
-        app = this.register(name, name, options);
-      }
-      return app;
     });
 
     /**
@@ -280,12 +281,19 @@ module.exports = function(Base, config) {
         throw new TypeError('expected `fn` to be a lookup function');
       }
 
+      // remove `lookup` fn from options to prevent self-recursion
+      delete options.lookup;
+
       var names = fn(name);
+      debug('looking up generator "%s" with "%j"', name, names);
+
       var len = names.length;
       var idx = -1;
       while (++idx < len) {
-        var gen = this._findGenerator(names[idx], options);
-        if (gen) return gen;
+        var gen = this.findGenerator(names[idx], options);
+        if (gen) {
+          return gen;
+        }
       }
     });
 
@@ -363,8 +371,8 @@ module.exports = function(Base, config) {
     this.define('generate', function(name, tasks, cb) {
       if (typeof name === 'function') {
         cb = name;
-        name = 'default';
         tasks = ['default'];
+        name = 'default';
       }
 
       if (Array.isArray(name) && typeof tasks === 'function') {
@@ -375,49 +383,48 @@ module.exports = function(Base, config) {
       cb = args.pop();
 
       if (typeof cb === 'function' && cb.name === 'finishRun') {
-        if (typeof name === 'string' && !/\W/.test(name)) {
-          var app = this.getGenerator(name);
-          tasks = Array.isArray(tasks) ? tasks : ['default'];
-          if (tasks[0] === 'default' && !app.hasTask('default')) {
-            tasks = ['noop'];
-            app.task('noop', function(next) {
-              debug('running noop task');
-              delete app.tasks.noop;
-              next();
-            });
-          }
-          return app.build(tasks, build);
+        var app = this.getGenerator(name);
+        if (app) {
+          return app.build('default', cb);
         }
+        return cb();
       }
 
-      var res = this.resolveTasks.apply(this, args);
-      if (res.tasks === null) {
+      var resolved = this.resolveTasks.apply(this, args);
+      var generator = resolved.generator;
+      tasks = resolved.tasks;
+
+      if (tasks === null) {
         debug('no default tasks defined');
         return cb();
       }
 
-      if (res.generator && res.generator.env) {
-        debug('generating: "%s"', res.tasks.join(', '));
-        this.emit('generate', res.generator.env.alias, res.tasks);
-      }
+      return this.processTasks(name, generator, tasks, cb);
+    });
 
+    this.define('processTasks', function(name, generator, tasks, cb) {
       var config = this.base.cache.config || {};
-      var gen = res.generator;
       var self = this;
 
-      if (typeof gen.config === 'undefined') {
-        gen.build(res.tasks, build);
+      // emit `generate`
+      if (generator && generator.env && tasks) {
+        debug('generating: "%s"', tasks.join(', '));
+        this.emit('generate', generator.env.alias, tasks);
+      }
+
+      if (typeof generator.config === 'undefined') {
+        generator.build(tasks, build);
         return;
       }
 
-      gen.config.process(config, function(err) {
+      generator.config.process(config, function(err) {
         if (err) return cb(err);
-        gen.build(res.tasks, build);
+        generator.build(tasks, build);
       });
 
       function build(err) {
         if (err) {
-          generatorError(err, self, name, cb);
+          utils.generatorError(err, self, name, cb);
         } else {
           cb();
         }
@@ -442,15 +449,14 @@ module.exports = function(Base, config) {
      */
 
     this.define('generateEach', function(tasks, cb) {
-      if (Array.isArray(tasks) && tasks.length === 0) {
-        tasks = ['default'];
-      }
       if (typeof tasks === 'function') {
         return this.generate('default', tasks);
       }
+
       if (typeof tasks === 'string') {
         return this.generate(tasks, cb);
       }
+
       async.eachSeries(tasks, function(task, next) {
         var args = task.split(':').concat(next);
         this.generate.apply(this, args);
@@ -469,13 +475,12 @@ module.exports = function(Base, config) {
 
     this.define('toAlias', function(name, options) {
       var opts = utils.extend({}, config, this.options, options);
+      var fn = opts.toAlias || opts.alias;
       var alias = name;
 
-      var fn = opts.toAlias || opts.alias;
       if (typeof fn === 'function') {
         alias = fn.call(this, name);
       }
-
       debug('created alias "%s" for string "%s"', alias, name);
       return alias;
     });
@@ -483,35 +488,3 @@ module.exports = function(Base, config) {
     return plugin;
   };
 };
-
-/**
- * Handle generator errors
- */
-
-function generatorError(err, app, name, cb) {
-  var match = /task "(.*?)" is not registered/.exec(err.message);
-  if (!match) return cb(err);
-
-  var taskName = match[1];
-  if (~name.indexOf(':')) {
-    var segs = name.split(':');
-    taskName = segs[1];
-    name = segs[0];
-  }
-
-  var msg = 'Cannot find ';
-  var gen = app.getGenerator(name);
-  if (gen && name !== taskName) {
-    msg += 'task: "' + taskName + '" in generator';
-  } else if (gen) {
-    msg += 'task';
-  } else {
-    msg += 'generator';
-  }
-
-  msg += ': "' + name + '"';
-
-  var cwd = app.get('options.cwd');
-  if (cwd) msg += ' in "' + cwd + '"';
-  return cb(new Error(msg));
-}
