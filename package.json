@@ -23,6 +23,7 @@
   "dependencies": {
     "async": "^1.5.2",
     "base-cwd": "^0.1.3",
+    "base-env": "^0.1.0",
     "base-plugins": "^0.4.5",
     "base-resolver": "^0.3.4",
     "base-task": "^0.4.1",
@@ -30,15 +31,13 @@
     "define-property": "^0.2.5",
     "extend-shallow": "^2.0.1",
     "generator-util": "^0.2.9",
-    "inflection": "^1.8.0",
     "kind-of": "^3.0.2",
-    "lazy-cache": "^1.0.3",
-    "npm-paths": "^0.1.3",
-    "resolve-glob": "^0.1.8"
+    "lazy-cache": "^1.0.3"
   },
   "devDependencies": {
     "assemble-core": "^0.14.3",
     "base": "^0.8.1",
+    "base-config": "^0.5.0",
     "base-option": "^0.7.0",
     "base-runtimes": "^0.1.4",
     "generate-foo": "^0.1.5",
@@ -50,7 +49,8 @@
     "gulp-mocha": "^2.2.0",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5",
-    "spawn-commands": "^0.3.1"
+    "spawn-commands": "^0.3.1",
+    "through2": "^2.0.1"
   },
   "lintDeps": {
     "ignore": [

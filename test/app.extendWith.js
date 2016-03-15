@@ -40,6 +40,20 @@ describe('.extendWith', function() {
     });
   });
 
+  it('should throw an error when a generator is not found', function(cb) {
+    base.register('foo', function(app) {
+      app.extendWith('fofoofofofofof');
+    });
+
+    try {
+      base.getGenerator('foo');
+      cb(new Error('expected an error'));
+    } catch (err) {
+      assert.equal(err.message, 'cannot find generator fofoofofofofof');
+      cb();
+    }
+  });
+
   it('should get a named generator', function(cb) {
     var count = 0;
     base.register('foo', function(app) {

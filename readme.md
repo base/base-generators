@@ -245,46 +245,15 @@ Checked off as they're added:
 
 ## API
 
-### [.resolve](index.js#L55)
+### [.register](index.js#L65)
 
-Attempts to find a generator with the given `name` and `options`.
-
-**Params**
-
-* `name` **{String}**: Can be a module name or filepath to a module that is locally or globally installed.
-* `options` **{Object}**
-* `returns` **{Object}**: Returns the filepath to the generator, if found.
-
-**Example**
-
-```js
-// resolve by generator "alias"
-app.resolve('foo');
-
-// resolve by generator name
-app.resolve('generate-foo');
-
-// resolve by filepath
-app.resolve('./a/b/c/');
-```
-
-Register configfile with the given `name` and `options`.
+Alias to `.setGenerator`.
 
 **Params**
 
-* `name` **{String}**
-* `configfile` **{String}**
-* `options` **{Object}**
-* `returns` **{object}**
-
-### [.register](index.js#L104)
-
-Register generator `name` with the given `fn`.
-
-**Params**
-
-* `name` **{String}**
-* `fn` **{Function}**: Generator function or instance
+* `name` **{String}**: The generator's name
+* `options` **{Object|Function|String}**: or generator
+* `generator` **{Object|Function|String}**: Generator function, instance or filepath.
 * `returns` **{Object}**: Returns the generator instance.
 
 **Example**
@@ -296,7 +265,7 @@ base.register('foo', function(app, base) {
 });
 ```
 
-### [.generator](index.js#L134)
+### [.generator](index.js#L89)
 
 Register generator `name` with the given `fn`, or get generator `name` if only one argument is passed. This method calls the `.getGenerator` method but goes one step further: if `name` is not already registered, it will try to resolve and register the generator before returning it (or `undefined` if unsuccessful).
 
@@ -315,31 +284,27 @@ base.generator('foo', function(app, base) {
 });
 ```
 
-### [.hasGenerator](index.js#L166)
+### [.setGenerator](index.js#L118)
 
-Return true if the given `name` exists on the `generators` object. Dot-notation may be used to check for sub-generators.
+Store a generator by file path or instance with the given `name` and `options`.
 
 **Params**
 
-* `name` **{String}**
-* `returns` **{Boolean}**: Returns true if the generator exists.
+* `name` **{String}**: The generator's name
+* `options` **{Object|Function|String}**: or generator
+* `generator` **{Object|Function|String}**: Generator function, instance or filepath.
+* `returns` **{Object}**: Returns the generator instance.
 
 **Example**
 
 ```js
-base.register('foo', function(app) {
-  app.register('bar', function() {});
+base.setGenerato('foo', function(app, base) {
+  // "app" is a private instance created for the generator
+  // "base" is a shared instance
 });
-
-base.hasGenerator('foo');
-//=> true
-base.hasGenerator('bar');
-//=> false
-base.hasGenerator('foo.bar');
-//=> true
 ```
 
-### [.getGenerator](index.js#L190)
+### [.getGenerator](index.js#L148)
 
 Get generator `name` from `app.generators`. Dot-notation may be used to get a sub-generator.
 
@@ -357,46 +322,60 @@ var foo = app.getGenerator('foo');
 var baz = app.getGenerator('foo.bar.baz');
 ```
 
-### [.findGenerator](index.js#L215)
+### [.getSubGenerator](index.js#L170)
 
-Find generator `name`, by first searching the cache,
-then searching the cache of the `base` generator,
-and last searching for a globally installed generator.
+Get sub-generator `name`, using dot-notation for nested generators.
 
-**Params**
-
-* `name` **{String}**
-* `options` **{Function}**: Optionally supply a rename function on `options.toAlias`
-* `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.
-
-### [.globalGenerator](index.js#L230)
-
-Search for globally installed generator `name`. If found, then generator
-is registered and returned, otherwise `undefined` is returned.
+```js
+app.getSubGenerator('foo.bar.baz')'
+```'
 
 **Params**
 
-* `name` **{String}**
-* `returns` **{Object|undefined}**
+* `name` **{String}**: The property-path of the generator to get    
+* `options` **{Object}**    
 
-### [.invoke](index.js#L258)
-
-Invoke the given generator in the context of (`this`) the current instance.
+### [.findGenerator](index.js#L205)
+Find generator `name`, by first searching the cache, then searching the cache of the `base` generator.
 
 **Params**
 
-* `app` **{String|Object}**: Generator name or instance.
-* `returns` **{Object}**: Returns the instance for chaining.
+* `name` **{String}**    
+* `options` **{Function}**: Optionally supply a rename function on `options.toAlias`    
+* `returns` **{Object|undefined}**: Returns the generator instance if found, or undefined.  
 
 **Example**
 
 ```js
-base.invoke('foo');
+// search by "alias"
+var foo = app.findGenerator('foo');
+
+// search by "full name"
+var foo = app.findGenerator('generate-foo');
 ```
 
-### [.extendWith](index.js#L295)
+Iterate over `app.generators` and call `generator.isMatch(name)`
+on the given `name`.
 
-Alias for `.invoke`, Extend the current generator instance with the settings of other generators.
+**Params**
+
+* `name` **{String}**
+* `returns` **{Object|undefined}**: Returns a generator object if a match is found.
+
+For example, if the lookup `name`
+is `foo`, the function might return `["generator-foo", "foo"]`,
+to ensure that the lookup happens in that order.
+
+**Params**
+
+* `name` **{String}**: Generator name to search for
+* `options` **{Object}**
+* `fn` **{Function}**: Lookup function that must return an array of names.
+* `returns` **{Object}**
+
+### [.extendWith](index.js#L319)
+
+Extend the generator instance with settings and features of another generator.
 
 **Params**
 
@@ -414,7 +393,7 @@ base.extendWith('foo');
 base.extendWith(['foo', 'bar', 'baz']);
 ```
 
-### [.generate](index.js#L333)
+### [.generate](index.js#L371)
 
 Run a `generator` and `tasks`, calling the given `callback` function upon completion.
 
@@ -452,7 +431,7 @@ base.generate(function(err) {
 });
 ```
 
-### [.generateEach](index.js#L414)
+### [.generateEach](index.js#L451)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -471,7 +450,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.alias](index.js#L451)
+### [.alias](index.js#L476)
 
 Create a generator alias from the given `name`.
 
@@ -481,45 +460,42 @@ Create a generator alias from the given `name`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the alias.
 
-### [.fullname](index.js#L469)
+### [App](lib/generator.js#L24)
 
-Create a generator's full name from the given `alias`.
-
-**Params**
-
-* `alias` **{String}**
-* `options` **{Object}**
-* `returns` **{String}**: Returns the full name.
-
-### [.resolveConfigpath](index.js#L486)
-
-Return the absolute filepath to a generator's main file.
+Create a new `App` with the given `val`, `options` and `parent` context.
 
 **Params**
 
-* `alias` **{String}**
+* `name` **{String}**
+* `val` **{Function|Object|String}**: App function, filepath or instance.
 * `options` **{Object}**
-* `returns` **{String}**: Returns the full name.
+* `parent` **{Object}**
 
-### [.configname](index.js#L504)
+**Example**
 
-Getter/setter for defining the `configname` name to use for lookups.
-By default `configname` is set to `generator.js`.
+```js
+var app = new Base();
+var generator = new App('foo', function() {}, {}, app);
+```
 
-### [.configfile](index.js#L526)
+Invoke `generator.fn` with the given `options` and optional `context`.
 
-Getter/setter for defining the `configfile` name to use for lookups.
-By default `configfile` is set to `generator.js`.
+**Params**
 
-### [.configpath](index.js#L544)
+* `options` **{Object}**
+* `context` **{Object}**
+* `returns` **{Object}**: Returns the context object or generator instance, modified by invoking `fn`.
 
-Getter/setter for defining the `configpath` name to use for lookups.
-By default `configpath` is set to `generator.js`.
+Returns true if `str` matches one of the following properties on `generator.env`
 
-### [.modulename](index.js#L562)
+* `key`: the original name used to register the generator
+* `name`: the name of the generator. this can be different than `key` if the generator was registered using a filepath.
+* `path`: the file path of the generator.
 
-Getter/setter for defining the `modulename` name to use for lookups.
-By default `modulename` is set to `generate`.
+**Params**
+
+* `str` **{String}**
+* `returns` **{Boolean}**
 
 Return true if the given `name` exists on the
 `app.tasks` object.
@@ -579,4 +555,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/base-generator
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 11, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 15, 2016._

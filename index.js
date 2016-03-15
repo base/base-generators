@@ -24,10 +24,9 @@ module.exports = function(Base, config) {
   return function plugin() {
     if (this.isRegistered('base-generators')) return;
 
-    // create the `Generator` class
+    // create the `Generator` class and load plugins
     if (typeof this.generators === 'undefined') {
       this.generators = {};
-
       this.isGenerator = true;
       this.use(plugins.task());
       this.use(plugins.plugin());
@@ -88,10 +87,7 @@ module.exports = function(Base, config) {
 
     this.define('generator', function(name, val, options) {
       if (arguments.length === 1 && typeof name === 'string') {
-        var generator = this.getGenerator(name);
-        if (generator || !utils.exists(name)) {
-          return generator;
-        }
+        return this.getGenerator(name);
       }
       this.setGenerator(name, val, options);
       return this.getGenerator(name);
@@ -121,10 +117,8 @@ module.exports = function(Base, config) {
       var generator = new this.Generator(name, val, options, this);
       var alias = generator.alias;
       this.generators[alias] = generator;
+      this.generators[name] = generator;
 
-      if (alias !== name) {
-        this.generators[name] = generator;
-      }
       this.emit('generator', alias, generator);
       return generator;
     });
@@ -236,7 +230,7 @@ module.exports = function(Base, config) {
 
     /**
      * Iterate over `app.generators` and call `generator.isMatch(name)`
-     * on the given `name`.
+     * on `name` until a match is found.
      *
      * @param {String} `name`
      * @return {Object|undefined} Returns a generator object if a match is found.
@@ -260,9 +254,9 @@ module.exports = function(Base, config) {
      * The lookup function receives `name` and must return an array
      * of names to use for the lookup.
      *
-     * For example, if the lookup `name`
-     * is `foo`, the function might return `["generator-foo", "foo"]`,
-     * to ensure that the lookup happens in that order.
+     * For example, if the lookup `name` is `foo`, the function might
+     * return `["generator-foo", "foo"]`, to ensure that the lookup happens
+     * in that order.
      *
      * @param {String} `name` Generator name to search for
      * @param {Object} `options`
@@ -384,18 +378,21 @@ module.exports = function(Base, config) {
 
       if (typeof cb === 'function' && cb.name === 'finishRun') {
         var app = this.getGenerator(name);
-        if (app) {
-          return app.build('default', cb);
-        }
-        return cb();
+        return app.build('default', cb);
       }
 
       var resolved = this.resolveTasks.apply(this, args);
       var generator = resolved.generator;
       tasks = resolved.tasks;
 
-      if (tasks === null) {
-        debug('no default tasks defined');
+      if (!tasks) {
+        debug('no default task defined');
+        this.emit('error', new Error('no default task defined'));
+        return cb();
+      }
+
+      if (!generator) {
+        this.emit('error', new Error('no default generator defined'));
         return cb();
       }
 

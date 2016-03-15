@@ -22,6 +22,11 @@ describe('.generator', function() {
     assert.equal(generator.name, 'abc');
   });
 
+  it('should fail when a generator is not found', function() {
+    var generator = base.getGenerator('whatever');
+    assert(!generator);
+  });
+
   it('should get a generator from the base instance from a nested generator', function() {
     base.register('abc', function() {});
     base.register('xyz', function(app) {

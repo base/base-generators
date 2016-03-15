@@ -3,6 +3,7 @@
 require('mocha');
 var assert = require('assert');
 var Base = require('base');
+var config = require('base-config');
 var option = require('base-option');
 var generators = require('..');
 var base;
@@ -14,11 +15,98 @@ describe('.generate', function() {
     base.use(option());
   });
 
+  describe('config.process', function(cb) {
+    it('should run tasks when the base-config plugin is used', function(cb) {
+      base.use(config());
+      var count = 0;
+      base.task('default', function(next) {
+        count++;
+        next();
+      });
+
+      base.generate('default', function(err) {
+        assert(!err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run handle errors when the base-config plugin is used', function(cb) {
+      base.use(config());
+      var count = 0;
+      base.task('default', function(next) {
+        count++;
+        next(new Error('fooo'));
+      });
+
+      base.generate('default', function(err) {
+        assert.equal(err.message, 'fooo');
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run handle config errors when the base-config plugin is used', function(cb) {
+      base.use(config());
+      var count = 0;
+      base.config.map('foo', function(val, key, config, next) {
+        count++;
+        next(new Error('fooo'));
+      });
+
+      base.set('cache.config', {foo: true});
+
+      base.task('default', function(next) {
+        count--;
+        next();
+      });
+
+      base.generate('default', function(err) {
+        assert.equal(err.message, 'fooo');
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+  });
+
   describe('generators', function(cb) {
     it('should throw an error when a generator is not found', function(cb) {
       base.generate('fdsslsllsfjssl', function(err) {
         assert(err);
         assert.equal('Cannot find generator: "fdsslsllsfjssl"', err.message);
+        cb();
+      });
+    });
+
+    it('should throw an error when a task is not found', function(cb) {
+      base.register('foo', function() {});
+      base.generate('foo:bar', function(err) {
+        assert(err);
+        assert.equal('Cannot find task: "bar" in generator: "foo"', err.message);
+        cb();
+      });
+    });
+
+    it('should not throw an error when the default task is not found', function(cb) {
+      base.register('foo', function() {});
+      base.generate('foo:default', function(err) {
+        assert(!err);
+        cb();
+      });
+    });
+
+    it('should not throw an error when a default generator is not found', function(cb) {
+      base.register('foo', function() {});
+      base.generate('default', function(err) {
+        assert(!err);
+        cb();
+      });
+    });
+
+    it('should not throw an error when a default generator is not found', function(cb) {
+      base.register('foo', function() {});
+      base.generate('default:default', function(err) {
+        assert(!err);
         cb();
       });
     });

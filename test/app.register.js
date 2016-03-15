@@ -44,13 +44,12 @@ describe('.register', function() {
       assert.equal(bar.env.alias, 'bar');
     });
 
-    it('should get a nested sub-generator from a generator registered as a function', function() {
+    it('should get a sub-generator from a generator registered as a function', function() {
       base.register('foo', function(foo) {
         foo.register('bar', function(bar) {
           bar.task('something', function() {});
         });
       });
-
       var bar = base.getGenerator('foo.bar');
       assert(bar);
       assert(bar.tasks);
@@ -105,7 +104,6 @@ describe('.register', function() {
           });
         });
       });
-
       var fez = base.getGenerator('foo.bar.fez');
       assert.equal(typeof fez, 'undefined');
     });
@@ -172,7 +170,8 @@ describe('.register', function() {
         base.register('not-exposed', require(fixtures('not-exposed.js')));
         cb(new Error('expected an error'));
       } catch (err) {
-        assert.equal(err.message, 'Cannot find module \'/Users/jonschlinkert/dev/base/base-generators-next/node_modules/not-exposed\'');
+        var fp = path.resolve(__dirname, '../node_modules/not-exposed');
+        assert.equal(err.message, 'Cannot find module \'' + fp + '\'');
         cb();
       }
     });
