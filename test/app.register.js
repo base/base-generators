@@ -3,7 +3,7 @@
 require('mocha');
 var path = require('path');
 var assert = require('assert');
-var Base = require('base');
+var Base = require('./support/app');
 var option = require('base-option');
 var generators = require('..');
 var base;
@@ -13,8 +13,8 @@ var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 describe('.register', function() {
   beforeEach(function() {
     Base.use(generators(Base));
+    Base.use(option());
     base = new Base();
-    base.use(option());
   });
 
   describe('function', function() {
@@ -207,6 +207,7 @@ describe('.register', function() {
       foo.task('default', function() {});
       base.register('foo', foo);
       var generator = base.getGenerator('foo');
+      assert(generator);
       assert(generator.tasks.hasOwnProperty('default'));
     });
 

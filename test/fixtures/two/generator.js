@@ -1,7 +1,7 @@
 'use strict';
 
 var generators = require('../../..');
-var Base = require('base');
+var Base = require('../../support/app');
 Base.use(generators(Base));
 var base = new Base();
 

@@ -3,7 +3,7 @@
 require('mocha');
 var assert = require('assert');
 var option = require('base-option');
-var Base = require('base');
+var Base = require('./support/app');
 var base;
 
 var generators = require('..');
@@ -126,7 +126,7 @@ describe('generators events', function() {
         called++;
       }
 
-      base.once('error', function(err) {
+      base.on('error', function(err) {
         assert.equal(err.message, 'whatever');
         called++;
       });

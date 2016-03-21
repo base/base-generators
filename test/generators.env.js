@@ -3,7 +3,7 @@
 require('mocha');
 var path = require('path');
 var assert = require('assert');
-var Base = require('base');
+var Base = require('./support/app');
 var env = require('base-env');
 var plugins = require('base-plugins');
 var generators = require('..');

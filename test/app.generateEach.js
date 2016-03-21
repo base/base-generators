@@ -2,7 +2,7 @@
 
 require('mocha');
 var assert = require('assert');
-var Base = require('base');
+var Base = require('./support/app');
 var option = require('base-option');
 var generators = require('..');
 var base;

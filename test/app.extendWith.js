@@ -2,18 +2,19 @@
 'use strict';
 
 require('mocha');
+require('generate-foo/generator.js');
+
 var path = require('path');
 var assert = require('assert');
-var gm = require('global-modules');
 var commands = require('spawn-commands');
-var option = require('base-option');
-var Base = require('base');
 var utils = require('generator-util');
+var gm = require('global-modules');
+var Base = require('./support/app');
 var generators = require('..');
-require('generate-foo/generator.js');
 var base;
 
 var fixture = path.resolve.bind(path, __dirname, 'fixtures/generators');
+
 function install(name, cb) {
   commands({
     args: ['install', '-g', '--silent', name],
@@ -32,7 +33,6 @@ describe('.extendWith', function() {
 
   beforeEach(function() {
     Base.use(generators(Base));
-    Base.use(option());
 
     base = new Base();
     base.option('alias', function(name) {
