@@ -2,7 +2,8 @@
 
 require('mocha');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var tasks = require('../lib/tasks');
 var generators = require('..');
 var base;
@@ -35,7 +36,8 @@ describe('.tasks plugin', function() {
 
 describe('tasks', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
+    Base.use(isApp());
+    Base.use(generators());
     base = new Base();
   });
 

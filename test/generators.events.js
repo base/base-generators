@@ -2,8 +2,8 @@
 
 require('mocha');
 var assert = require('assert');
-var option = require('base-option');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var base;
 
 var generators = require('..');
@@ -11,7 +11,8 @@ var generators = require('..');
 describe('generators events', function() {
   describe('generator', function() {
     beforeEach(function() {
-      Base.use(generators(Base));
+      Base.use(isApp());
+      Base.use(generators());
       base = new Base();
     });
 
@@ -83,6 +84,7 @@ describe('generators events', function() {
 
       base.getGenerator('foo')
         .build(function(err) {
+          assert(err);
           assert.equal(called, 1);
           cb();
         });
@@ -112,6 +114,7 @@ describe('generators events', function() {
 
       base.getGenerator('a.b.c.d')
         .build(function(err) {
+          assert(err);
           assert.equal(called, 1);
           cb();
         });
@@ -153,7 +156,9 @@ describe('generators events', function() {
 
       base.getGenerator('a.b.c.d')
         .build(function(err) {
-          assert.equal(called, 6);
+          assert(err);
+          assert.equal(called, 5);
+          assert.equal(err.message, 'whatever');
           cb();
         });
     });

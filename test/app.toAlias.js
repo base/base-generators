@@ -2,13 +2,15 @@
 
 require('mocha');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var generators = require('..');
 var base;
 
 describe('.toAlias', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
+    Base.use(isApp());
+    Base.use(generators());
     base = new Base();
   });
 
@@ -16,12 +18,28 @@ describe('.toAlias', function() {
     assert.equal(base.toAlias('foo-bar'), 'foo-bar');
   });
 
-  it('should create an alias using the given alias function', function() {
+  it('should create an alias using the `options.toAlias` function', function() {
     var alias = base.toAlias('one-two-three', {
-      alias: function(name) {
+      toAlias: function(name) {
         return name.slice(name.lastIndexOf('-') + 1);
       }
     });
+    assert.equal(alias, 'three');
+  });
+
+  it('should create an alias using the given function', function() {
+    var alias = base.toAlias('one-two-three', function(name) {
+      return name.slice(name.lastIndexOf('-') + 1);
+    });
+    assert.equal(alias, 'three');
+  });
+
+  it('should create an alias using base.options.toAlias function', function() {
+    base.options.toAlias = function(name) {
+      return name.slice(name.lastIndexOf('-') + 1);
+    };
+
+    var alias = base.toAlias('one-two-three');
     assert.equal(alias, 'three');
   });
 });

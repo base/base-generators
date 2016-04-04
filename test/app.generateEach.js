@@ -2,15 +2,17 @@
 
 require('mocha');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var option = require('base-option');
 var generators = require('..');
 var base;
 
 describe('.generateEach', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
+    Base.use(isApp());
     base = new Base();
+    base.use(generators());
     base.use(option());
   });
 

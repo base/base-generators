@@ -3,15 +3,17 @@
 require('mocha');
 var path = require('path');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var generators = require('..');
 var base;
 
 describe('base-generators', function() {
   describe('plugin', function() {
     it('should register as a plugin on `base`', function() {
-      Base.use(generators(Base));
+      Base.use(isApp());
       base = new Base();
+      base.use(generators());
       assert.equal(base.isRegistered('base-generators'), true);
     });
 
@@ -38,8 +40,9 @@ describe('base-generators', function() {
 
   describe('cwd', function() {
     beforeEach(function() {
-      Base.use(generators(Base));
+      Base.use(isApp());
       base = new Base();
+      base.use(generators());
     });
 
     it('should get the current working directory', function() {

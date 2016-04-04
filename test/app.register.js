@@ -3,18 +3,20 @@
 require('mocha');
 var path = require('path');
 var assert = require('assert');
-var Base = require('./support/app');
 var option = require('base-option');
+var isApp = require('./support/is-app');
 var generators = require('..');
+var Base = require('base');
 var base;
 
 var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 
 describe('.register', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
-    Base.use(option());
+    Base.use(isApp());
     base = new Base();
+    base.use(generators());
+    base.use(option());
   });
 
   describe('function', function() {
@@ -133,7 +135,7 @@ describe('.register', function() {
 
   describe('alias', function() {
     it('should use a custom function to create the alias', function() {
-      base.option('alias', function(name) {
+      base.option('toAlias', function(name) {
         return name.slice(name.lastIndexOf('-') + 1);
       });
 

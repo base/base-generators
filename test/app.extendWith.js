@@ -9,7 +9,8 @@ var assert = require('assert');
 var commands = require('spawn-commands');
 var utils = require('generator-util');
 var gm = require('global-modules');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var generators = require('..');
 var base;
 
@@ -32,20 +33,21 @@ describe('.extendWith', function() {
   });
 
   beforeEach(function() {
-    Base.use(generators(Base));
+    Base.use(isApp());
 
     base = new Base();
-    base.option('alias', function(name) {
+    base.use(generators());
+    base.option('toAlias', function(name) {
       return name.replace(/^generate-/, '');
     });
   });
 
   it('should throw an error when a generator is not found', function(cb) {
-    base.register('foo', function(app) {
-      app.extendWith('fofoofofofofof');
-    });
-
     try {
+      base.register('foo', function(app) {
+        app.extendWith('fofoofofofofof');
+      });
+
       base.getGenerator('foo');
       cb(new Error('expected an error'));
     } catch (err) {
@@ -56,6 +58,7 @@ describe('.extendWith', function() {
 
   it('should get a named generator', function(cb) {
     var count = 0;
+
     base.register('foo', function(app) {
       app.extendWith('bar');
       count++;

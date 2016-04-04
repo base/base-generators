@@ -3,8 +3,9 @@
 require('mocha');
 var path = require('path');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
 var option = require('base-option');
+var Base = require('base');
 var generators = require('..');
 var base;
 
@@ -12,11 +13,12 @@ var fixtures = path.resolve.bind(path, __dirname, 'fixtures');
 
 describe('.generator', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
-    Base.use(option());
+    Base.use(isApp());
     base = new Base();
+    base.use(generators());
+    base.use(option());
 
-    base.option('alias', function(key) {
+    base.option('toAlias', function(key) {
       return key.replace(/^generate-(.*)/, '$1');
     });
   });
@@ -87,14 +89,14 @@ describe('.generator', function() {
         app.task('default', function(next) {
           assert.equal(app.get('a'), 'b');
           next();
-        })
+        });
       });
 
       var foo = base.getGenerator('foo');
       foo.set('a', 'b');
       foo.build('default', function(err) {
         if (err) return cb(err);
-        cb()
+        cb();
       });
     });
 
@@ -104,14 +106,14 @@ describe('.generator', function() {
         app.task('default', function(next) {
           assert.equal(base.get('x'), 'z');
           next();
-        })
+        });
       });
 
       var foo = base.getGenerator('foo');
       foo.set('a', 'b');
       foo.build('default', function(err) {
         if (err) return cb(err);
-        cb()
+        cb();
       });
     });
 
@@ -120,12 +122,12 @@ describe('.generator', function() {
         app.task('default', function(next) {
           assert.equal(env.alias, 'foo');
           next();
-        })
+        });
       });
 
       base.getGenerator('foo').build('default', function(err) {
         if (err) return cb(err);
-        cb()
+        cb();
       });
     });
 
@@ -237,6 +239,62 @@ describe('.generator', function() {
         app.task('aaa', function() {});
       });
       base.getGenerator('foo');
+    });
+  });
+
+  describe('namespace', function() {
+    it('should expose `app.namespace`', function(cb) {
+      base.generator('foo', function(app) {
+        assert(typeof app.namespace, 'string');
+        cb();
+      });
+    });
+
+    it('should create namespace from generator alias', function(cb) {
+      base.generator('generate-foo', function(app) {
+        assert.equal(app.namespace, 'foo');
+        cb();
+      });
+    });
+
+    it('should create sub-generator namespace from parent namespace and alias', function(cb) {
+      base.generator('generate-foo', function(app) {
+        assert.equal(app.namespace, 'foo');
+
+        app.generator('generate-bar', function(bar) {
+          assert.equal(bar.namespace, 'foo.bar');
+
+          bar.generator('generate-baz', function(baz) {
+            assert.equal(baz.namespace, 'foo.bar.baz');
+
+            baz.generator('generate-qux', function(qux) {
+              assert.equal(qux.namespace, 'foo.bar.baz.qux');
+              cb();
+            });
+          });
+        });
+      });
+    });
+
+    it('should expose namespace on `this`', function(cb) {
+      base.generator('generate-foo', function(app, first) {
+        assert.equal(this.namespace, 'foo');
+
+        this.generator('generate-bar', function() {
+          assert.equal(this.namespace, 'foo.bar');
+
+          this.generator('generate-baz', function() {
+            assert.equal(this.namespace, 'foo.bar.baz');
+
+            this.generator('generate-qux', function() {
+              assert.equal(this.namespace, 'foo.bar.baz.qux');
+              assert.equal(app.namespace, 'foo');
+              assert.equal(typeof first.namespace, 'undefined');
+              cb();
+            });
+          });
+        });
+      });
     });
   });
 });

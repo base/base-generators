@@ -2,7 +2,7 @@
 
 var generators = require('../../..');
 var Base = require('../../support/app');
-Base.use(generators(Base));
+Base.use(generators());
 var base = new Base();
 
 base.task('default', function() {});

@@ -2,14 +2,16 @@
 
 require('mocha');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
 var generators = require('..');
+var Base = require('base');
 var base;
 
 describe('.generate', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
+    Base.use(isApp());
     base = new Base();
+    base.use(generators());
   });
 
   it('should register a task', function() {

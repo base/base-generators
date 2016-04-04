@@ -2,7 +2,8 @@
 
 require('mocha');
 var assert = require('assert');
-var Base = require('./support/app');
+var isApp = require('./support/is-app');
+var Base = require('base');
 var config = require('base-config');
 var option = require('base-option');
 var generators = require('..');
@@ -10,8 +11,9 @@ var base;
 
 describe('.generate', function() {
   beforeEach(function() {
-    Base.use(generators(Base));
+    Base.use(isApp());
     base = new Base();
+    base.use(generators());
     base.use(option());
   });
 
@@ -49,6 +51,7 @@ describe('.generate', function() {
     it('should run handle config errors when the base-config plugin is used', function(cb) {
       base.use(config());
       var count = 0;
+
       base.config.map('foo', function(val, key, config, next) {
         count++;
         next(new Error('fooo'));
@@ -87,7 +90,7 @@ describe('.generate', function() {
       });
     });
 
-    it('should not throw an error when the default task is not found', function(cb) {
+    it('should *not* throw an error when the default task is not found', function(cb) {
       base.register('foo', function() {});
       base.generate('foo:default', function(err) {
         assert(!err);
