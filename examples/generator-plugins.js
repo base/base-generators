@@ -5,18 +5,20 @@
  * and plugins to child generators
  */
 
+var generators = require('..');
 var option = require('base-option');
 var Base = require('base');
-var generators = require('..');
-
-Base.use(generators());
+Base.use(function fn() {
+  this.is('app');
+  return fn;
+});
 
 var base = new Base();
+base.use(generators());
 base.use(option());
-
 base.option('cwd', 'examples');
 
-base.generators.set('foo', function(foo) {
+base.register('foo', function(foo) {
   this.use(function fn() {
     this.aaa = 'aaa';
     return fn;
@@ -26,39 +28,31 @@ base.generators.set('foo', function(foo) {
   console.log(this.aaa);
   console.log(this.options);
 
-  this.generators.set('bar', function(bar) {
-    this.use(function() {
-      this.bbb = 'bbb';
-    });
-
+  this.register('bar', function(bar) {
+    this.bbb = 'bbb';
     this.option('two', 'two');
+
     console.log(this.aaa);
     console.log(this.options);
 
-    this.generators.set('baz', function(baz) {
-      this.use(function() {
-        this.ccc = 'ccc';
-      });
-
+    this.register('baz', function(baz) {
+      this.ccc = 'ccc';
       this.option('three', 'three');
+
       console.log(this.aaa);
       console.log(this.options);
 
-      this.generators.set('qux', function(qux) {
-        this.use(function() {
-          this.ddd = 'ddd';
-        });
-
+      this.register('qux', function(qux) {
+        this.ddd = 'ddd';
         this.option('four', 'four');
+
         console.log(this.aaa);
         console.log(this.options);
 
-        this.generators.set('fez', function(fez) {
-          this.use(function() {
-            this.eee = 'eee';
-          });
-
+        this.register('fez', function(fez) {
+          this.eee = 'eee';
           this.option('five', 'five');
+
           console.log(this.aaa);
           console.log(this.options);
         });

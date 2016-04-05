@@ -1,32 +1,38 @@
 
-var Generate = require('generate');
+var generators = require('..');
+var Base = require('base');
+Base.use(function fn() {
+  this.isApp = true;
+  return fn;
+});
 
 // all of the `base` variables below refer
-// to this instance
-var base = new Generate();
+// to this initial instance
+var base = new Base();
+base.use(generators());
 
-base.generator('foo', function(foo, base) {
+base.register('foo', function(foo, base) {
   // `foo` is "app"
   // `foo.parent` is (also) `base`
   // `foo.base` is `base`
   //
   // namespace => `foo`
 
-  foo.generator('bar', function(bar, base) {
+  foo.register('bar', function(bar, base) {
     // `bar` is "app"
     // `bar.parent` is `foo`
     // `bar.base` is `base`
     //
     // namespace => `foo.bar`
 
-    bar.generator('baz', function(baz, base) {
+    bar.register('baz', function(baz, base) {
       // `baz` is "app"
       // `baz.parent` is `bar`
       // `baz.base` is `base`
       //
       // namespace => `foo.bar.baz`
 
-      baz.generator('qux', function(qux, base) {
+      baz.register('qux', function(qux, base) {
         // `qux` is "app"
         // `quz.parent` is `baz`
         // `qux.base`is `base`

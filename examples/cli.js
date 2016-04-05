@@ -1,19 +1,24 @@
 'use strict';
 
-var runtimes = require('base-runtimes');
 var generators = require('..');
+var runtimes = require('base-runtimes');
 var Base = require('base');
-Base.use(generators());
-Base.use(runtimes());
+Base.use(function fn() {
+  this.isApp = true;
+  return fn;
+});
 
 var argv = require('minimist')(process.argv.slice(2));
-var file = argv.file ? require(argv.file) : require('./generator');
+var file = argv.file ? require(argv.file) : require('./generators/a');
+var tasks = argv._.length ? argv._ : ['default'];
 
 var base = new Base();
-base.register('base', file);
+base.use(generators());
+base.use(runtimes());
+base.register('default', file);
 
-base.getGenerator('base')
-  .generateEach(argv._, function(err) {
+base.getGenerator('default')
+  .generateEach(tasks, function(err) {
     if (err) throw err;
     console.log('done!');
   });
