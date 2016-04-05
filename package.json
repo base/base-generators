@@ -2,11 +2,11 @@
   "name": "base-generators",
   "description": "Adds project-generator support to your `base` application.",
   "version": "0.1.19",
-  "homepage": "https://github.com/jonschlinkert/base-generators",
+  "homepage": "https://github.com/node-base/base-generators",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
-  "repository": "jonschlinkert/base-generators",
+  "repository": "node-base/base-generators",
   "bugs": {
-    "url": "https://github.com/jonschlinkert/base-generators/issues"
+    "url": "https://github.com/node-base/base-generators/issues"
   },
   "license": "MIT",
   "files": [
@@ -21,36 +21,36 @@
     "test": "mocha"
   },
   "dependencies": {
-    "async": "^1.5.2",
-    "base-cwd": "^0.1.3",
-    "base-env": "^0.1.0",
-    "base-plugins": "^0.4.5",
-    "base-resolver": "^0.3.4",
-    "base-task": "^0.4.1",
+    "async": "1.5.2",
+    "base-cwd": "^0.1.6",
+    "base-env": "^0.1.1",
+    "base-option": "^0.7.0",
+    "base-pkg": "^0.2.0",
+    "base-plugins": "^0.4.10",
+    "base-task": "^0.4.2",
     "debug": "^2.2.0",
     "define-property": "^0.2.5",
-    "extend-shallow": "^2.0.1",
-    "generator-util": "^0.2.9",
     "kind-of": "^3.0.2",
-    "lazy-cache": "^1.0.3"
+    "lazy-cache": "^1.0.3",
+    "mixin-deep": "^1.1.3"
   },
   "devDependencies": {
-    "assemble-core": "^0.14.3",
+    "assemble-core": "^0.16.1",
     "base": "^0.8.1",
-    "base-config": "^0.5.0",
-    "base-option": "^0.7.0",
-    "base-runtimes": "^0.1.4",
+    "base-config": "^0.5.2",
+    "base-runtimes": "^0.1.5",
     "generate-foo": "^0.1.5",
+    "generator-util": "^0.2.9",
     "global-modules": "^0.2.1",
     "gulp": "^3.9.1",
     "gulp-eslint": "^2.0.0",
     "gulp-format-md": "^0.1.7",
     "gulp-istanbul": "^0.10.3",
     "gulp-mocha": "^2.2.0",
+    "gulp-unused": "^0.1.2",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5",
-    "spawn-commands": "^0.3.1",
-    "through2": "^2.0.1"
+    "spawn-commands": "^0.3.1"
   },
   "lintDeps": {
     "ignore": [
