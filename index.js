@@ -171,13 +171,17 @@ module.exports = function(config) {
 
     this.define('getGenerator', function(name, options) {
       debug('getting generator "%s"', name);
-      var app = this.findGenerator(name, options);
+      var opts = utils.merge({}, this.options, options);
+      var app = this.findGenerator(name, opts);
       if (app) {
-        if (!app.isInvoked) {
-          app.invoke(options);
-          app.isInvoked = true;
-          this.generators[name] = app;
+        if (app.isInvoked) {
+          return app;
         }
+        app.isInvoked = true;
+        app.option(opts);
+        this.run(app);
+        app.invoke(opts);
+        this.generators[name] = app;
         return app;
       }
     });
@@ -268,7 +272,6 @@ module.exports = function(config) {
           break;
         }
       }
-
       return app;
     });
 
@@ -469,16 +472,16 @@ module.exports = function(config) {
       var config = this.get('cache.config') || {};
       var self = this;
 
-      if (typeof generator.config === 'undefined' || config.isNormalized) {
-        generator.build(tasks, build);
+      if (typeof generator.config !== 'undefined' && !config.isNormalized) {
+        generator.config.process(config, function(err, config) {
+          if (err) return cb(err);
+          self.set('cache.config', config);
+          generator.build(tasks, build);
+        });
         return;
       }
 
-      generator.config.process(config, function(err, config) {
-        if (err) return cb(err);
-        self.set('cache.config', config);
-        generator.build(tasks, build);
-      });
+      generator.build(tasks, build);
 
       function build(err) {
         if (err) {
