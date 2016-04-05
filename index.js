@@ -30,11 +30,11 @@ module.exports = function(config) {
       this.isGenerator = true;
       this.generators = {};
 
-      this.options.validatePlugin = function(app) {
+      utils.define(this.options, 'validatePlugin', function(app) {
         return app.isGenerator === true;
-      };
+      });
 
-      // plugins
+      // register the necessary plugins
       this.use(utils.option());
       this.use(utils.plugins());
       this.use(utils.cwd());
@@ -46,6 +46,8 @@ module.exports = function(config) {
       this.fns.push(plugin);
       this.use(tasks());
       this.num = num++;
+
+      // make sure constructor is non-enumerable
       this.define('constructor', this.constructor);
     }
 
@@ -174,14 +176,13 @@ module.exports = function(config) {
       var opts = utils.merge({}, this.options, options);
       var app = this.findGenerator(name, opts);
       if (app) {
-        if (app.isInvoked) {
-          return app;
+        if (!app.isInvoked) {
+          app.isInvoked = true;
+          app.option(opts);
+          this.run(app);
+          app.invoke(opts);
+          this.generators[name] = app;
         }
-        app.isInvoked = true;
-        app.option(opts);
-        this.run(app);
-        app.invoke(opts);
-        this.generators[name] = app;
         return app;
       }
     });
