@@ -23,7 +23,7 @@
   "dependencies": {
     "async": "1.5.2",
     "base-cwd": "^0.1.6",
-    "base-env": "^0.1.1",
+    "base-env": "^0.1.3",
     "base-option": "^0.7.0",
     "base-pkg": "^0.2.0",
     "base-plugins": "^0.4.10",
