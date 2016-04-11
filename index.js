@@ -9,7 +9,7 @@
 
 var path = require('path');
 var async = require('async');
-var debug = require('debug')('base:base-generators');
+var debug = require('debug')('base:generators');
 var createApp = require('./lib/app');
 var tasks = require('./lib/tasks');
 var utils = require('./lib/utils');
@@ -24,6 +24,8 @@ module.exports = function(config) {
 
   return function plugin(app) {
     if (!isValidInstance(this)) return;
+    debug('initializing <%s>, called from <%s>', __filename, module.parent.id);
+
     var cache = {};
 
     if (!this.isGenerator) {
@@ -473,10 +475,11 @@ module.exports = function(config) {
       var config = this.get('cache.config') || {};
       var self = this;
 
-      if (typeof generator.config !== 'undefined' && !config.isNormalized) {
+      if (typeof generator.config !== 'undefined') {
         generator.config.process(config, function(err, config) {
           if (err) return cb(err);
           self.set('cache.config', config);
+          generator.option(config);
           generator.build(tasks, build);
         });
         return;
