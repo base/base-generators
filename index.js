@@ -384,9 +384,9 @@ module.exports = function(config) {
         return this;
       }
 
+      var app = this.findGenerator(name, options);
       debug('extending "%s" with "%s"', this.env.alias, name);
 
-      var app = this.findGenerator(name, options);
       if (!utils.isApp(app, 'Generator')) {
         throw new Error('cannot find generator ' + name);
       }
@@ -475,11 +475,15 @@ module.exports = function(config) {
       var config = this.get('cache.config') || {};
       var self = this;
 
+      if (typeof generator.data === 'function') {
+        generator.data(this.cache.data);
+      }
+
       if (typeof generator.config !== 'undefined') {
-        generator.config.process(config, function(err, config) {
+        generator.config.process(config, function(err, res) {
           if (err) return cb(err);
-          self.set('cache.config', config);
-          generator.option(config);
+          self.set('cache.config', res || config);
+          generator.option(res || config);
           generator.build(tasks, build);
         });
         return;
