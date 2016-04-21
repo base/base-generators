@@ -26,32 +26,31 @@ module.exports = function(config) {
     if (!isValidInstance(this)) return;
     debug('initializing <%s>, called from <%s>', __filename, module.parent.id);
 
+    this.isApp = true;
+    this.isGenerator = true;
+    this.generators = {};
     var cache = {};
 
-    if (!this.isGenerator) {
-      this.isGenerator = true;
-      this.generators = {};
+    utils.define(this.options, 'validatePlugin', function(app) {
+      return app.isGenerator === true || app.isApp === true;
+    });
 
-      utils.define(this.options, 'validatePlugin', function(app) {
-        return app.isGenerator === true;
-      });
+    // register the necessary plugins
+    this.use(utils.option());
+    this.use(utils.plugins());
+    this.use(utils.cwd());
+    this.use(utils.pkg());
+    this.use(utils.task());
+    this.use(utils.env());
+    this.use(utils.compose());
+    this.use(tasks());
 
-      // register the necessary plugins
-      this.use(utils.option());
-      this.use(utils.plugins());
-      this.use(utils.cwd());
-      this.use(utils.pkg());
-      this.use(utils.task());
-      this.use(utils.env());
+    // ensure this plugin is registered on generators
+    this.fns.push(plugin);
+    this.num = num++;
 
-      // ensure this plugin is registered on generators
-      this.fns.push(plugin);
-      this.use(tasks());
-      this.num = num++;
-
-      // make sure constructor is non-enumerable
-      this.define('constructor', this.constructor);
-    }
+    // make sure constructor is non-enumerable
+    this.define('constructor', this.constructor);
 
     /**
      * Alias to `.setGenerator`.
@@ -180,8 +179,8 @@ module.exports = function(config) {
       if (app) {
         if (!app.isInvoked) {
           app.isInvoked = true;
-          app.option(opts);
           this.run(app);
+          app.options = utils.merge({}, app.options, opts);
           app.invoke(opts);
           this.generators[name] = app;
         }
@@ -442,15 +441,40 @@ module.exports = function(config) {
       }
 
       var resolved = this.resolveTasks.apply(this, args);
+
       if (cb.name === 'finishRun' && resolved.tasks.indexOf(name) !== -1) {
-        var app = this.getGenerator(name);
-        if (app) {
-          return app.build('default', cb);
+        var generator = this.getGenerator(name);
+        if (generator) {
+          extendGenerator(this, generator);
+          return generator.build('default', cb);
         }
       }
 
       return this.processTasks(name, resolved, cb);
     });
+
+    function extendGenerator(app, generator) {
+      // extend generator with settings from default
+      if (app.generators.hasOwnProperty('default') && generator.env.alias !== 'default') {
+        var compose = generator.compose('default')
+          .options()
+          .tasks();
+
+        if (typeof app.data === 'function') {
+          compose.data();
+        }
+
+        if (typeof app.pipeline === 'function') {
+          compose.pipeline();
+        }
+
+        if (typeof app.helper === 'function') {
+          compose.helpers();
+          compose.engines();
+          compose.views();
+        }
+      }
+    }
 
     /**
      * Run generator or task `name`
@@ -474,6 +498,9 @@ module.exports = function(config) {
 
       var config = this.get('cache.config') || {};
       var self = this;
+
+      extendGenerator(this, generator);
+      console.log(generator);
 
       if (typeof generator.data === 'function') {
         generator.data(this.cache.data);
