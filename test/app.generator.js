@@ -36,7 +36,7 @@ describe('.generator', function() {
       var gen = base.getGenerator('foo', {
         lookup: function(key) {
           return ['generate-' + key, 'verb-' + key + '-generator', key];
-        },
+        }
       });
 
       assert(gen);

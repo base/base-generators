@@ -258,7 +258,7 @@ describe('.generate', function() {
 
       base.build('foo', function(err) {
         if (err) cb(err);
-      })
+      });
     });
 
     it('should run the default task on a generator', function(cb) {

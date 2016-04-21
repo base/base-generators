@@ -241,7 +241,7 @@ describe('.extendWith', function() {
         app.task('c', function() {});
       });
 
-      var qux = base.getGenerator('qux');
+      base.getGenerator('qux');
       base.getGenerator('foo');
     });
 
