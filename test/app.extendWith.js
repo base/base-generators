@@ -1,4 +1,3 @@
-
 'use strict';
 
 require('mocha');
@@ -54,6 +53,39 @@ describe('.extendWith', function() {
       assert.equal(err.message, 'cannot find generator fofoofofofofof');
       cb();
     }
+  });
+
+  it('should extend a generator with settings in the default generator', function(cb) {
+    var count = 0;
+
+    base.register('foo', function(app) {
+      app.task('default', function(next) {
+        assert(app.tasks.hasOwnProperty('default'));
+        assert(app.tasks.hasOwnProperty('a'));
+        assert(app.tasks.hasOwnProperty('b'));
+        assert(app.tasks.hasOwnProperty('c'));
+        count++;
+        next();
+      });
+    });
+
+    base.register('default', function(app) {
+      app.task('a', function(next) {
+        next();
+      });
+      app.task('b', function(next) {
+        next();
+      });
+      app.task('c', function(next) {
+        next();
+      });
+    });
+
+    base.generate('foo', function(err) {
+      if (err) return cb(err);
+      assert.equal(count, 1);
+      cb();
+    });
   });
 
   it('should get a named generator', function(cb) {
