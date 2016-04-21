@@ -11,7 +11,7 @@
   "license": "MIT",
   "files": [
     "index.js",
-    "lib/"
+    "lib"
   ],
   "main": "index.js",
   "engines": {
@@ -21,42 +21,37 @@
     "test": "mocha"
   },
   "dependencies": {
-    "async": "1.5.2",
+    "async": "^1.5.2",
+    "base-compose": "^0.1.3",
     "base-cwd": "^0.1.6",
     "base-env": "^0.1.3",
     "base-option": "^0.7.0",
-    "base-pkg": "^0.2.0",
+    "base-pkg": "^0.2.2",
     "base-plugins": "^0.4.10",
-    "base-task": "^0.4.2",
+    "base-task": "^0.4.3",
     "debug": "^2.2.0",
     "define-property": "^0.2.5",
+    "global-modules": "^0.2.1",
     "kind-of": "^3.0.2",
     "lazy-cache": "^1.0.3",
     "mixin-deep": "^1.1.3"
   },
   "devDependencies": {
-    "assemble-core": "^0.16.1",
+    "assemble-core": "^0.17.0",
     "base": "^0.8.1",
     "base-config": "^0.5.2",
     "base-runtimes": "^0.1.5",
     "generate-foo": "^0.1.5",
     "generator-util": "^0.2.9",
-    "global-modules": "^0.2.1",
     "gulp": "^3.9.1",
     "gulp-eslint": "^2.0.0",
-    "gulp-format-md": "^0.1.7",
-    "gulp-istanbul": "^0.10.3",
+    "gulp-format-md": "^0.1.8",
+    "gulp-istanbul": "^0.10.4",
     "gulp-mocha": "^2.2.0",
     "gulp-unused": "^0.1.2",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5",
     "spawn-commands": "^0.3.1"
-  },
-  "lintDeps": {
-    "ignore": [
-      "docs",
-      "examples/generators"
-    ]
   },
   "keywords": [
     "boilerplate",
@@ -68,6 +63,12 @@
     "yeoman",
     "yo"
   ],
+  "lintDeps": {
+    "ignore": [
+      "docs",
+      "examples/generators"
+    ]
+  },
   "verb": {
     "toc": true,
     "layout": "default",
