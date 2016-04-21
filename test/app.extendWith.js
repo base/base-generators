@@ -277,6 +277,23 @@ describe('.extendWith', function() {
       base.getGenerator('abc');
     });
 
+    it('should extend with a generator invoked from node_modules by name on a default instance', function() {
+      var app = new Base();
+      app.use(generators());
+      app.option('toAlias', function(name) {
+        return name.replace(/^generate-/, '');
+      });
+
+      assert(!app.tasks.a);
+      assert(!app.tasks.b);
+      assert(!app.tasks.c);
+
+      app.extendWith('generate-foo');
+      assert(app.tasks.a);
+      assert(app.tasks.b);
+      assert(app.tasks.c);
+    });
+
     it('should extend with a generator invoked from global modules by name', function(cb) {
       base.register('zzz', function(app) {
         assert(!app.tasks.a);
