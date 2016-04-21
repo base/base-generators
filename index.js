@@ -384,7 +384,8 @@ module.exports = function(config) {
       }
 
       var app = this.findGenerator(name, options);
-      debug('extending "%s" with "%s"', this.env.alias, name);
+      var alias = this.env ? this.env.alias : 'default';
+      debug('extending "%s" with "%s"', alias, name);
 
       if (!utils.isApp(app, 'Generator')) {
         throw new Error('cannot find generator ' + name);
