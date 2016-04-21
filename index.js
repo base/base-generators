@@ -450,7 +450,7 @@ module.exports = function(config) {
         }
       }
 
-      return this.processTasks(name, resolved, cb);
+      return this.runTasks(name, resolved, cb);
     });
 
     function extendGenerator(app, generator) {
@@ -477,10 +477,10 @@ module.exports = function(config) {
     }
 
     /**
-     * Run generator or task `name`
+     * Run generators and tasks
      */
 
-    this.define('processTasks', function(name, resolved, cb) {
+    this.define('runTasks', function(name, resolved, cb) {
       var generator = resolved.generator;
       var tasks = resolved.tasks;
 
@@ -499,13 +499,10 @@ module.exports = function(config) {
       var config = this.get('cache.config') || {};
       var self = this;
 
+      // extend `generator` with settings from `app`
       extendGenerator(this, generator);
-      console.log(generator);
 
-      if (typeof generator.data === 'function') {
-        generator.data(this.cache.data);
-      }
-
+      // if `base-config` is registered call `.process` first, then run tasks
       if (typeof generator.config !== 'undefined') {
         generator.config.process(config, function(err, res) {
           if (err) return cb(err);
@@ -516,8 +513,8 @@ module.exports = function(config) {
         return;
       }
 
+      // run tasks
       generator.build(tasks, build);
-
       function build(err) {
         if (err) {
           utils.generatorError(err, self, name, cb);
@@ -568,7 +565,7 @@ module.exports = function(config) {
       }
 
       async.eachSeries(arr, function(obj, next) {
-        app.processTasks(obj.name, obj.resolved, next);
+        app.runTasks(obj.name, obj.resolved, next);
       }, cb);
     });
 
