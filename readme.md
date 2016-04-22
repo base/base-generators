@@ -350,22 +350,24 @@ var foo = app.findGenerator('generate-foo');
 
 Get sub-generator `name`, using dot-notation for nested generators.
 
-```js
-app.getSubGenerator('foo.bar.baz')'
-```'
-
 **Params**
 
-* `name` **{String}**: The property-path of the generator to get    
-* `options` **{Object}**    
+* `name` **{String}**: The property-path of the generator to get
+* `options` **{Object}**
+
+**Example**
+
+```js
+app.getSubGenerator('foo.bar.baz');
+```
 
 Iterate over `app.generators` and call `generator.isMatch(name)`
 on `name` until a match is found.
 
 **Params**
 
-* `name` **{String}**    
-* `returns` **{Object|undefined}**: Returns a generator object if a match is found.  
+* `name` **{String}**
+* `returns` **{Object|undefined}**: Returns a generator object if a match is found.
 
 For example, if the lookup `name` is `foo`, the function might
 return `["generator-foo", "foo"]`, to ensure that the lookup happens
@@ -373,18 +375,19 @@ in that order.
 
 **Params**
 
-* `name` **{String}**: Generator name to search for    
-* `options` **{Object}**    
-* `fn` **{Function}**: Lookup function that must return an array of names.    
-* `returns` **{Object}**  
+* `name` **{String}**: Generator name to search for
+* `options` **{Object}**
+* `fn` **{Function}**: Lookup function that must return an array of names.
+* `returns` **{Object}**
 
 ### [.extendWith](index.js#L373)
+
 Extend the generator instance with settings and features of another generator.
 
 **Params**
 
-* `app` **{String|Object}**    
-* `returns` **{Object}**: Returns the instance for chaining.  
+* `app` **{String|Object}**
+* `returns` **{Object}**: Returns the instance for chaining.
 
 **Example**
 
@@ -456,9 +459,9 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.alias](index.js#L587)
+### [.toAlias](index.js#L600)
 
-Create a generator alias from the given `name`.
+Create a generator alias from the given `name`. By default the alias is the string after the last dash. Or the whole string if no dash exists.
 
 **Params**
 
@@ -466,17 +469,75 @@ Create a generator alias from the given `name`.
 * `options` **{Object}**
 * `returns` **{String}**: Returns the alias.
 
-Get the generator `alias`
+**Example**
+
+```js
+var camelcase = require('camel-case');
+var alias = app.toAlias('foo-bar-baz');
+//=> 'baz'
+
+// custom `toAlias` function
+app.option('toAlias', function(name) {
+  return camelcase(name);
+});
+var alias = app.toAlias('foo-bar-baz');
+//=> 'fooBarBaz'
+```
+
+### [.alias](lib/app.js#L52)
+
+Get the generator `alias` created by calling the `app.toAlias` function.
 
 * `returns` **{String}**: Returns the value from `generator.env.alias`
 
-Get the generator `name`
+**Example**
+
+```js
+console.log(generator.alias);
+```
+
+### [.name](lib/app.js#L83)
+
+Get the `name` that was used to originally registered the generator.
 
 * `returns` **{String}**: Returns the value from `generator.env.name`
 
-Get the generator `namespace`
+**Example**
+
+```js
+var app = new Base();
+var foo = app.register('foo', function() {});
+console.log(foo.name);
+//=> 'foo'
+var bar = foo.register('bar', function() {});
+console.log(bar.name);
+//=> 'bar'
+var baz = bar.register('baz', function() {});
+console.log(baz.name);
+//=> 'baz'
+```
+
+### [.namespace](lib/app.js#L114)
+
+Get a generator's `namespace`, which created from the generator's parent `namespace` plus the generator's `alias`.
 
 * `returns` **{String}**: Returns the value from `generator.env.namespace`
+
+**Example**
+
+```js
+var foo = app.register('foo', function() {});
+console.log(foo.namespace);
+//=> 'foo'
+var bar = foo.register('bar', function() {});
+console.log(bar.namespace);
+//=> 'foo.bar'
+var baz = bar.register('baz', function() {});
+console.log(baz.namespace);
+//=> 'foo.bar.baz'
+```
+
+### [.invoke](lib/app.js#L141)
 
 Invoke `generator.fn` with the given `options` and optional `context`.
 
@@ -486,23 +547,42 @@ Invoke `generator.fn` with the given `options` and optional `context`.
 * `context` **{Object}**
 * `returns` **{Object}**: Returns the context object or generator instance, modified by invoking `fn`.
 
-Returns true if `str` matches one of the following properties on `generator.env`
+**Example**
 
-* `key`: the original name used to register the generator
-* `name`: the name of the generator. this can be different than `key` if the generator was registered using a filepath.
-* `path`: the file path of the generator.
+```js
+generator.invoke();
+```
+
+### [.isMatch](lib/app.js#L160)
+
+Returns true if `str` matches one of the following properties on `generator.env` - `key`: the original name used to register the generator - `name`: the name of the generator. this can be different than `key` if the generator was registered using a filepath. - `path`: the file path of the generator.
 
 **Params**
 
 * `str` **{String}**
 * `returns` **{Boolean}**
 
-Return true if the given `name` exists on the
-`app.tasks` object.
+**Example**
+
+```js
+var isMatch = generator.isMatch('foo/bar.js');
+```
+
+### [.hasTask](lib/tasks.js#L115)
+
+Return true if task `name` exists on `app.tasks`.
 
 **Params**
 
-* `name` **{String}**
+* `name` **{String}**: Task name to check
+
+**Example**
+
+```js
+app.task('foo', function() {});
+console.log(app.hasTask('foo'));
+//=> true
+```
 
 ## Related projects
 
@@ -511,11 +591,11 @@ You might also be interested in these projects:
 * [bach](https://www.npmjs.com/package/bach): Compose your async functions with elegance | [homepage](https://github.com/gulpjs/bach)
 * [base-fs](https://www.npmjs.com/package/base-fs): base-methods plugin that adds vinyl-fs methods to your 'base' application for working with the file… [more](https://www.npmjs.com/package/base-fs) | [homepage](https://github.com/node-base/base-fs)
 * [base-pipeline](https://www.npmjs.com/package/base-pipeline): base-methods plugin that adds pipeline and plugin methods for dynamically composing streaming plugin pipelines. | [homepage](https://github.com/node-base/base-pipeline)
+* [base-plugins](https://www.npmjs.com/package/base-plugins): Upgrade's plugin support in base applications to allow plugins to be called any time after… [more](https://www.npmjs.com/package/base-plugins) | [homepage](https://github.com/node-base/base-plugins)
 * [base-task](https://www.npmjs.com/package/base-task): base plugin that provides a very thin wrapper around [https://github.com/doowb/composer](https://github.com/doowb/composer) for adding task methods to… [more](https://www.npmjs.com/package/base-task) | [homepage](https://github.com/node-base/base-task)
+* [base](https://www.npmjs.com/package/base): base is the foundation for creating modular, unit testable and highly pluggable node.js applications, starting… [more](https://www.npmjs.com/package/base) | [homepage](https://github.com/node-base/base)
 * [composer](https://www.npmjs.com/package/composer): API-first task runner with three methods: task, run and watch. | [homepage](https://github.com/doowb/composer)
 * [gulp](https://www.npmjs.com/package/gulp): The streaming build system | [homepage](http://gulpjs.com)
-* [base-plugins](https://www.npmjs.com/package/base-plugins): Upgrade's plugin support in base applications to allow plugins to be called any time after… [more](https://www.npmjs.com/package/base-plugins) | [homepage](https://github.com/node-base/base-plugins)
-* [base](https://www.npmjs.com/package/base): base is the foundation for creating modular, unit testable and highly pluggable node.js applications, starting… [more](https://www.npmjs.com/package/base) | [homepage](https://github.com/node-base/base)
 
 ## Contributing
 

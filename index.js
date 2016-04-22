@@ -254,8 +254,8 @@ module.exports = function(config) {
      * Get sub-generator `name`, using dot-notation for nested generators.
      *
      * ```js
-     * app.getSubGenerator('foo.bar.baz')'
-     * ```'
+     * app.getSubGenerator('foo.bar.baz');
+     * ```
      * @name .getSubGenerator
      * @param {String} `name` The property-path of the generator to get
      * @param {Object} `options`
@@ -575,9 +575,22 @@ module.exports = function(config) {
     });
 
     /**
-     * Create a generator alias from the given `name`.
+     * Create a generator alias from the given `name`. By default the alias
+     * is the string after the last dash. Or the whole string if no dash exists.
      *
-     * @name .alias
+     * ```js
+     * var camelcase = require('camel-case');
+     * var alias = app.toAlias('foo-bar-baz');
+     * //=> 'baz'
+     *
+     * // custom `toAlias` function
+     * app.option('toAlias', function(name) {
+     *   return camelcase(name);
+     * });
+     * var alias = app.toAlias('foo-bar-baz');
+     * //=> 'fooBarBaz'
+     * ```
+     * @name .toAlias
      * @param {String} `name`
      * @param {Object} `options`
      * @return {String} Returns the alias.
