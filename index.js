@@ -213,9 +213,10 @@ module.exports = function(config) {
       }
 
       if (cache[name]) return cache[name];
-      var app = this._findGenerator(name, opts);
+      var app = this.generators[name] || this._findGenerator(name, opts);
+
       // if no app, check the `base` instance
-      if (typeof app === 'undefined' && this.parent) {
+      if (typeof app === 'undefined' && this.hasOwnProperty('parent')) {
         app = this.base._findGenerator(name, opts);
       }
       // if no app, check `node_modules` or the file system
@@ -238,14 +239,15 @@ module.exports = function(config) {
         return this.getSubGenerator.apply(this, arguments);
       }
 
-      options = options || {};
       var opts = utils.merge({}, this.options, options);
-
       if (typeof opts.lookup === 'function') {
-        return this.lookupGenerator(name, opts, opts.lookup);
-      } else {
-        return this.generators[name] || this.matchGenerator(name);
+        var app = this.lookupGenerator(name, opts, opts.lookup);
+        if (app) {
+          return app;
+        }
       }
+
+      return this.matchGenerator(name);
     });
 
     /**
@@ -455,8 +457,10 @@ module.exports = function(config) {
     });
 
     function extendGenerator(app, generator) {
+      var alias = generator.env && generator.env.alias;
+
       // extend generator with settings from default
-      if (app.generators.hasOwnProperty('default') && generator.env.alias !== 'default') {
+      if (app.generators.hasOwnProperty('default') && alias !== 'default') {
         var compose = generator.compose('default')
           .options()
           .tasks();
