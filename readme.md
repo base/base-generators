@@ -440,7 +440,7 @@ base.generate(function(err) {
 });
 ```
 
-### [.generateEach](index.js#L549)
+### [.generateEach](index.js#L555)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -459,7 +459,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.toAlias](index.js#L600)
+### [.toAlias](index.js#L606)
 
 Create a generator alias from the given `name`. By default the alias is the string after the last dash. Or the whole string if no dash exists.
 
@@ -599,7 +599,7 @@ You might also be interested in these projects:
 
 ## Contributing
 
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/jonschlinkert/base-generators/issues/new).
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/node-base/base-generators/issues/new).
 
 ## Building docs
 
