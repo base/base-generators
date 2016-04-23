@@ -1,7 +1,7 @@
 {
   "name": "base-generators",
   "description": "Adds project-generator support to your `base` application.",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "homepage": "https://github.com/node-base/base-generators",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "node-base/base-generators",
@@ -39,10 +39,8 @@
   "devDependencies": {
     "assemble-core": "^0.17.1",
     "base": "^0.8.1",
-    "base-cli": "^0.5.0",
     "base-config": "^0.5.2",
     "base-data": "^0.4.4",
-    "base-fs": "^0.3.1",
     "base-runtimes": "^0.1.7",
     "generate-foo": "^0.1.5",
     "generator-util": "^0.2.9",
