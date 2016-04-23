@@ -444,7 +444,6 @@ module.exports = function(config) {
       }
 
       var resolved = this.resolveTasks.apply(this, args);
-
       if (cb.name === 'finishRun' && resolved.tasks.indexOf(name) !== -1) {
         var generator = this.getGenerator(name);
         if (generator) {
@@ -456,14 +455,21 @@ module.exports = function(config) {
       return this.runTasks(name, resolved, cb);
     });
 
+    /**
+     * Extend the generator being invoked with settings from the instance,
+     * but only if the generator is not the `default` generator.
+     *
+     * Also, this does not extend tasks.
+     */
+
     function extendGenerator(app, generator) {
       var alias = generator.env && generator.env.alias;
 
       // extend generator with settings from default
       if (app.generators.hasOwnProperty('default') && alias !== 'default') {
-        var compose = generator.compose('default')
+        var compose = generator
+          .compose('default')
           .options()
-          .tasks();
 
         if (typeof app.data === 'function') {
           compose.data();

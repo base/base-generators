@@ -7,6 +7,7 @@ var path = require('path');
 var assert = require('assert');
 var commands = require('spawn-commands');
 var utils = require('generator-util');
+var data = require('base-data');
 var gm = require('global-modules');
 var isApp = require('./support/is-app');
 var Base = require('base');
@@ -35,6 +36,7 @@ describe('.extendWith', function() {
     Base.use(isApp());
 
     base = new Base();
+    base.use(data());
     base.use(generators());
     base.option('toAlias', function(name) {
       return name.replace(/^generate-/, '');
@@ -60,10 +62,34 @@ describe('.extendWith', function() {
 
     base.register('foo', function(app) {
       app.task('default', function(next) {
+        assert.equal(app.options.foo, 'bar');
+        assert.equal(app.cache.data.foo, 'bar');
+        count++;
+        next();
+      });
+    });
+
+    base.register('default', function(app) {
+      app.data({foo: 'bar'});
+      app.option({foo: 'bar'});
+    });
+
+    base.generate('foo', function(err) {
+      if (err) return cb(err);
+      assert.equal(count, 1);
+      cb();
+    });
+  });
+
+  it('should not extend tasks by default', function(cb) {
+    var count = 0;
+
+    base.register('foo', function(app) {
+      app.task('default', function(next) {
         assert(app.tasks.hasOwnProperty('default'));
-        assert(app.tasks.hasOwnProperty('a'));
-        assert(app.tasks.hasOwnProperty('b'));
-        assert(app.tasks.hasOwnProperty('c'));
+        assert(!app.tasks.hasOwnProperty('a'));
+        assert(!app.tasks.hasOwnProperty('b'));
+        assert(!app.tasks.hasOwnProperty('c'));
         count++;
         next();
       });
