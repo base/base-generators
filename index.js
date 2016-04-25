@@ -174,18 +174,25 @@ module.exports = function(config) {
 
     this.define('getGenerator', function(name, options) {
       debug('getting generator "%s"', name);
+
       var opts = utils.merge({}, this.options, options);
-      var app = this.findGenerator(name, opts);
-      if (app) {
-        if (!app.isInvoked) {
-          app.isInvoked = true;
-          this.run(app);
-          app.options = utils.merge({}, app.options, opts);
-          app.invoke(opts);
-          this.generators[name] = app;
-        }
-        return app;
+      var generator = this.findGenerator(name, opts);
+
+      if (generator && !generator.isInvoked) {
+        generator.isInvoked = true;
+
+        // add instance plugins to generator
+        this.run(generator);
+
+        // merge options and data (don't break references)
+        utils.merge(generator.cache.data, this.cache.data);
+        utils.merge(generator.options, this.options);
+
+        // invoke the generator
+        generator.invoke(opts);
+        this.generators[name] = generator;
       }
+      return generator;
     });
 
     /**
@@ -246,7 +253,6 @@ module.exports = function(config) {
           return app;
         }
       }
-
       return this.matchGenerator(name);
     });
 
@@ -447,7 +453,7 @@ module.exports = function(config) {
       if (cb.name === 'finishRun' && resolved.tasks.indexOf(name) !== -1) {
         var generator = this.getGenerator(name);
         if (generator) {
-          extendGenerator(this, generator);
+          extendGenerator(this, generator, this.get('cache.config') || {});
           return generator.build('default', cb);
         }
       }
@@ -462,8 +468,17 @@ module.exports = function(config) {
      * Also, this does not extend tasks.
      */
 
-    function extendGenerator(app, generator) {
+    function extendGenerator(app, generator, config) {
       var alias = generator.env && generator.env.alias;
+
+      // update `cache.config`
+      generator.set('cache.config', config);
+      app.set('cache.config', config);
+
+      // set options
+      generator.option(app.options);
+      generator.option(config);
+
 
       // extend generator with settings from default
       if (app.generators.hasOwnProperty('default') && alias !== 'default') {
@@ -491,17 +506,17 @@ module.exports = function(config) {
      * Run generators and tasks
      */
 
-    this.define('runTasks', function(name, resolved, cb) {
+    this.define('runTasks', function(name, resolved, next) {
       var generator = resolved.generator;
       var tasks = resolved.tasks;
 
       if (!tasks) {
         this.emit('error', new Error('no default task defined'));
-        return cb();
+        return next();
       }
       if (!generator) {
         this.emit('error', new Error(name + ' generator is not registered'));
-        return cb();
+        return next();
       }
 
       debug('generating: "%s"', tasks.join(', '));
@@ -510,15 +525,16 @@ module.exports = function(config) {
       var config = this.get('cache.config') || {};
       var self = this;
 
-      // extend `generator` with settings from `app`
-      extendGenerator(this, generator);
 
       // if `base-config` is registered call `.process` first, then run tasks
       if (typeof generator.config !== 'undefined') {
         generator.config.process(config, function(err, res) {
-          if (err) return cb(err);
-          self.set('cache.config', res || config);
-          generator.option(res || config);
+          if (err) return next(err);
+
+          // extend `generator` with settings from `app`
+          extendGenerator(self, generator, res || config);
+
+          // build tasks, next
           generator.build(tasks, build);
         });
         return;
@@ -528,9 +544,9 @@ module.exports = function(config) {
       generator.build(tasks, build);
       function build(err) {
         if (err) {
-          utils.generatorError(err, self, name, cb);
+          utils.generatorError(err, self, name, next);
         } else {
-          cb();
+          next();
         }
       }
     });
