@@ -450,6 +450,8 @@ module.exports = function(config) {
       }
 
       var resolved = this.resolveTasks.apply(this, args);
+      resolved.orig = args;
+
       if (cb.name === 'finishRun' && resolved.tasks.indexOf(name) !== -1) {
         var generator = this.getGenerator(name);
         if (generator) {
@@ -511,12 +513,19 @@ module.exports = function(config) {
       var tasks = resolved.tasks;
 
       if (!tasks) {
-        this.emit('error', new Error('no default task defined'));
-        return next();
+        // if no tasks were resolved, but the user specified tasks to run, emit an error
+        var orig = resolved.orig;
+        if (orig.length > 1 || orig[0] !== 'default') {
+          this.emit('error', new Error('no default task defined'));
+        }
+        // otherwise we can assume the user is running custom code
+        next();
+        return;
       }
       if (!generator) {
         this.emit('error', new Error(name + ' generator is not registered'));
-        return next();
+        next();
+        return;
       }
 
       debug('generating: "%s"', tasks.join(', '));
@@ -592,6 +601,7 @@ module.exports = function(config) {
       }
 
       async.eachSeries(arr, function(obj, next) {
+        obj.resolved.orig = tasks;
         app.runTasks(obj.name, obj.resolved, next);
       }, cb);
     });
