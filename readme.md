@@ -348,7 +348,7 @@ var foo = app.findGenerator('generate-foo');
 
 ### [.getSubGenerator](index.js#L271)
 
-Get sub-generator `name`, using dot-notation for nested generators.
+Get sub-generator `name`, optionally using dot-notation for nested generators.
 
 **Params**
 
@@ -402,45 +402,19 @@ base.extendWith(['foo', 'bar', 'baz']);
 app.extendWith(require('generate-defaults'));
 ```
 
-### [.generate](index.js#L440)
+### [runGenerators](index.js#L501)
 
-Run a `generator` and `tasks`, calling the given `callback` function upon completion.
+Run generators, calling `.config.process` first if it exists.
 
 **Params**
 
-* `name` **{String}**
-* `tasks` **{String|Array}**
-* `cb` **{Function}**: Callback function that exposes `err` as the only parameter.
+* `name` **{String|Array}**: generator to run
+* `tasks` **{Array|String}**: tasks to run
+* `app` **{Object}**: Application instance
+* `generator` **{Object}**: generator instance
+* **{Function}**: next
 
-**Events**
-
-* `emits`: `generate` with the generator `name` and the array of `tasks` that are queued to run.
-
-**Example**
-
-```js
-// run tasks `bar` and `baz` on generator `foo`
-base.generate('foo', ['bar', 'baz'], function(err) {
-  if (err) throw err;
-});
-
-// or use shorthand
-base.generate('foo:bar,baz', function(err) {
-  if (err) throw err;
-});
-
-// run the `default` task on generator `foo`
-base.generate('foo', function(err) {
-  if (err) throw err;
-});
-
-// run the `default` task on the `default` generator, if defined
-base.generate(function(err) {
-  if (err) throw err;
-});
-```
-
-### [.generateEach](index.js#L580)
+### [.generateEach](index.js#L585)
 
 Iterate over an array of generators and tasks, calling [generate](#generate) on each.
 
@@ -459,7 +433,7 @@ base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
 });
 ```
 
-### [.toAlias](index.js#L632)
+### [.toAlias](index.js#L637)
 
 Create a generator alias from the given `name`. By default the alias is the string after the last dash. Or the whole string if no dash exists.
 
