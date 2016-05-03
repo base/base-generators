@@ -139,7 +139,7 @@ module.exports = function(config) {
 
       createApp.setParent(generator, this);
       createApp.decorate(generator, generator);
-      generator.createEnv(name, val, options, this);
+      generator.createEnv(name, val, options);
 
       if (utils.isGenerator(generator.env.app)) {
         var app = generator.env.app;
@@ -257,7 +257,7 @@ module.exports = function(config) {
     });
 
     /**
-     * Get sub-generator `name`, using dot-notation for nested generators.
+     * Get sub-generator `name`, optionally using dot-notation for nested generators.
      *
      * ```js
      * app.getSubGenerator('foo.bar.baz');
@@ -434,7 +434,6 @@ module.exports = function(config) {
      * @param {String} `name`
      * @param {String|Array} `tasks`
      * @param {Function} `cb` Callback function that exposes `err` as the only parameter.
-     * @api public
      */
 
     this.define('generate', function(name, tasks, cb) {
@@ -453,56 +452,11 @@ module.exports = function(config) {
       resolved.orig = args;
 
       if (cb.name === 'finishRun' && resolved.tasks.indexOf(name) !== -1) {
-        var generator = this.getGenerator(name);
-        if (generator) {
-          extendGenerator(this, generator, this.get('cache.config') || {});
-          return generator.build('default', cb);
-        }
+        resolved.generator = this.getGenerator(name);
+        resolved.tasks = ['default'];
       }
-
-      return this.runTasks(name, resolved, cb);
+      this.runTasks(name, resolved, cb);
     });
-
-    /**
-     * Extend the generator being invoked with settings from the instance,
-     * but only if the generator is not the `default` generator.
-     *
-     * Also, this does not extend tasks.
-     */
-
-    function extendGenerator(app, generator, config) {
-      var alias = generator.env && generator.env.alias;
-
-      // update `cache.config`
-      generator.set('cache.config', config);
-      app.set('cache.config', config);
-
-      // set options
-      generator.option(app.options);
-      generator.option(config);
-
-
-      // extend generator with settings from default
-      if (app.generators.hasOwnProperty('default') && alias !== 'default') {
-        var compose = generator
-          .compose('default')
-          .options()
-
-        if (typeof app.data === 'function') {
-          compose.data();
-        }
-
-        if (typeof app.pipeline === 'function') {
-          compose.pipeline();
-        }
-
-        if (typeof app.helper === 'function') {
-          compose.helpers();
-          compose.engines();
-          compose.views();
-        }
-      }
-    }
 
     /**
      * Run generators and tasks
@@ -530,35 +484,86 @@ module.exports = function(config) {
 
       debug('generating: "%s"', tasks.join(', '));
       this.emit('generate', generator.alias, tasks, generator);
+      runGenerators(name, tasks, this, generator, next);
+    });
 
-      var config = this.get('cache.config') || {};
-      var self = this;
+    /**
+     * Run generators, calling `.config.process` first if it exists.
+     *
+     * @param {String|Array} `name` generator to run
+     * @param {Array|String} `tasks` tasks to run
+     * @param {Object} `app` Application instance
+     * @param {Object} `generator` generator instance
+     * @param {Function} next
+     * @api public
+     */
 
-
+    function runGenerators(name, tasks, app, generator, next) {
       // if `base-config` is registered call `.process` first, then run tasks
       if (typeof generator.config !== 'undefined') {
-        generator.config.process(config, function(err, res) {
-          if (err) return next(err);
-
-          // extend `generator` with settings from `app`
-          extendGenerator(self, generator, res || config);
-
-          // build tasks, next
-          generator.build(tasks, build);
-        });
-        return;
+        var config = app.get('cache.config') || {};
+        generator.config.process(config, runGenerator);
+      } else {
+        runGenerator();
       }
 
-      // run tasks
-      generator.build(tasks, build);
-      function build(err) {
+      function runGenerator(err) {
         if (err) {
-          utils.generatorError(err, self, name, next);
+          next(err);
+          return;
+        }
+        extendGenerator(app, generator);
+        generator.build(tasks, done);
+      }
+
+      function done(err) {
+        if (err) {
+          utils.generatorError(err, app, name, next);
         } else {
           next();
         }
       }
-    });
+    }
+
+    /**
+     * Extend the generator being invoked with settings from the instance,
+     * but only if the generator is not the `default` generator.
+     *
+     * Also, this does not extend tasks.
+     */
+
+    function extendGenerator(app, generator, res) {
+      var alias = generator.env && generator.env.alias;
+
+      // update `cache.config`
+      var config = utils.merge({}, res || app.base.cache.config);
+      generator.set('cache.config', config);
+
+      // set options
+      generator.option(app.options);
+      generator.option(config);
+
+      // extend generator with settings from default
+      if (app.generators.hasOwnProperty('default') && alias !== 'default') {
+        var compose = generator
+          .compose('default')
+          .options();
+
+        if (typeof app.data === 'function') {
+          compose.data();
+        }
+
+        if (typeof app.pipeline === 'function') {
+          compose.pipeline();
+        }
+
+        if (typeof app.helper === 'function') {
+          compose.helpers();
+          compose.engines();
+          compose.views();
+        }
+      }
+    }
 
     /**
      * Iterate over an array of generators and tasks, calling [generate](#generate)
