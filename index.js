@@ -536,7 +536,7 @@ module.exports = function(config) {
       var alias = generator.env && generator.env.alias;
 
       // update `cache.config`
-      var config = utils.merge({}, res || app.base.cache.config);
+      var config = utils.merge({}, res || app.pkg.get(app._name));
       generator.set('cache.config', config);
 
       // set options
