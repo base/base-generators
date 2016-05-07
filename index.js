@@ -157,8 +157,8 @@ module.exports = function(config) {
     });
 
     /**
-     * Get generator `name` from `app.generators`. Dot-notation
-     * may be used to get a sub-generator.
+     * Get generator `name` from `app.generators` and invoke it with the current instance.
+     * Dot-notation may be used to get a sub-generator.
      *
      * ```js
      * var foo = app.getGenerator('foo');
@@ -196,8 +196,8 @@ module.exports = function(config) {
     });
 
     /**
-     * Find generator `name`, by first searching the cache,
-     * then searching the cache of the `base` generator.
+     * Find generator `name`, by first searching the cache, then searching the
+     * cache of the `base` generator. Use this to get a generator without invoking it.
      *
      * ```js
      * // search by "alias"
@@ -533,7 +533,8 @@ module.exports = function(config) {
      */
 
     function extendGenerator(app, generator, res) {
-      var alias = generator.env && generator.env.alias;
+      var env = generator.env || {};
+      var alias = env.alias;
 
       // update `cache.config`
       var config = utils.merge({}, res || app.pkg.get(app._name));
@@ -546,7 +547,7 @@ module.exports = function(config) {
       // extend generator with settings from default
       if (app.generators.hasOwnProperty('default') && alias !== 'default') {
         var compose = generator
-          .compose('default')
+          .compose(['default'])
           .options();
 
         if (typeof app.data === 'function') {
@@ -561,6 +562,10 @@ module.exports = function(config) {
           compose.helpers();
           compose.engines();
           compose.views();
+        }
+
+        if (typeof app.question === 'function') {
+          compose.questions();
         }
       }
     }
