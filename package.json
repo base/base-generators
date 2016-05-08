@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "base-compose": "^0.1.4",
+    "base-compose": "^0.1.5",
     "base-cwd": "^0.1.6",
-    "base-env": "^0.1.6",
+    "base-env": "^0.1.7",
     "base-option": "^0.7.0",
     "base-pkg": "^0.2.2",
     "base-plugins": "^0.4.10",
