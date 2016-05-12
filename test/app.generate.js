@@ -351,6 +351,60 @@ describe('.generate', function() {
     });
   });
 
+  describe('options', function(cb) {
+    it('should pass options to generator.options', function(cb) {
+      var count = 0;
+      base.register('default', function(app, base, env, options) {
+        app.task('default', function(next) {
+          count++;
+          assert.equal(app.options.foo, 'bar');
+          next();
+        });
+      });
+
+      base.generate({foo: 'bar'}, function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should expose options on generator options', function(cb) {
+      var count = 0;
+      base.register('default', function(app, base, env, options) {
+        app.task('default', function(next) {
+          count++;
+          assert.equal(options.foo, 'bar');
+          next();
+        });
+      });
+
+      base.generate({foo: 'bar'}, function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should not mutate options on parent instance', function(cb) {
+      var count = 0;
+      base.register('default', function(app, base, env, options) {
+        app.task('default', function(next) {
+          count++;
+          assert.equal(options.foo, 'bar');
+          assert(!base.options.foo);
+          next();
+        });
+      });
+
+      base.generate({foo: 'bar'}, function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+  });
+
   describe('default tasks', function(cb) {
     it('should run the default task on the default generator', function(cb) {
       var count = 0;

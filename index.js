@@ -186,7 +186,7 @@ module.exports = function(config) {
 
         // merge options and data (don't break references)
         utils.merge(generator.cache.data, this.cache.data);
-        utils.merge(generator.options, this.options);
+        opts = utils.merge(generator.options, opts);
 
         // invoke the generator
         generator.invoke(opts);
@@ -436,26 +436,102 @@ module.exports = function(config) {
      * @param {Function} `cb` Callback function that exposes `err` as the only parameter.
      */
 
-    this.define('generate', function(name, tasks, cb) {
-      if (Array.isArray(name) && typeof tasks === 'function') {
-        return this.generateEach(name, tasks);
+    this.define('generate', function(name, tasks, options, cb) {
+      var args = arguments;
+      var arr = [];
+      var opts = {};
+
+      for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        switch(utils.typeOf(arg)) {
+          case 'string':
+          case 'array':
+            arr.push(arg);
+            continue;
+          case 'object':
+            opts = arg;
+            continue;
+          case 'function':
+            cb = arg;
+            continue;
+        }
       }
 
-      var args = [].slice.call(arguments);
-      cb = args.pop();
+      name = arr[0];
+      tasks = arr[1] || [];
+
+      if (Array.isArray(name) && tasks.length === 0) {
+        this.generateEach(name, opts, cb);
+        return;
+      }
 
       if (typeof cb !== 'function') {
         throw new TypeError('expected a callback function');
       }
 
-      var resolved = this.resolveTasks.apply(this, args);
-      resolved.orig = args;
+      var resolved = this.resolveTasks(name, tasks);
+      resolved.orig = [].concat(name).concat(tasks);
+      resolved.options = opts || {};
 
       if (cb.name === 'finishRun' && resolved.tasks.indexOf(name) !== -1) {
         resolved.generator = this.getGenerator(name);
         resolved.tasks = ['default'];
       }
+
       this.runTasks(name, resolved, cb);
+    });
+
+    /**
+     * Iterate over an array of generators and tasks, calling [generate](#generate)
+     * on each.
+     *
+     * ```js
+     * // run tasks `a` and `b` on generator `foo`,
+     * // and tasks `c` and `d` on generator `bar`
+     * base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
+     *   if (err) throw err;
+     * });
+     * ```
+     * @name .generateEach
+     * @param {String|Array} `tasks` Array of generators and tasks to run.
+     * @param {Function} `cb` Callback function that exposes `err` as the only parameter.
+     * @api public
+     */
+
+    this.define('generateEach', function(tasks, options, cb) {
+      if (typeof options === 'function') {
+        cb = options;
+        options = {};
+      }
+
+      if (typeof tasks === 'function') {
+        cb = tasks;
+        tasks = ['default'];
+      }
+
+      if (typeof tasks === 'string') {
+        tasks = [tasks];
+      }
+
+      var len = tasks.length;
+      var idx = -1;
+      var arr = [];
+      var app = this;
+
+      while (++idx < len) {
+        var val = tasks[idx];
+        var resolved = app.resolveTasks(val);
+        resolved.options = options;
+        arr.push({name: val, resolved: resolved});
+        if (this._lookup) {
+          this.options.lookup = this._lookup;
+        }
+      }
+
+      async.eachSeries(arr, function(obj, next) {
+        obj.resolved.orig = tasks;
+        app.runTasks(obj.name, obj.resolved, next);
+      }, cb);
     });
 
     /**
@@ -463,10 +539,7 @@ module.exports = function(config) {
      */
 
     this.define('runTasks', function(name, resolved, next) {
-      var generator = resolved.generator;
-      var tasks = resolved.tasks;
-
-      if (!tasks) {
+      if (!resolved.tasks) {
         // if no tasks were resolved, but the user specified tasks to run, emit an error
         var orig = resolved.orig;
         if (orig.length > 1 || orig[0] !== 'default') {
@@ -476,15 +549,18 @@ module.exports = function(config) {
         next();
         return;
       }
-      if (!generator) {
+      if (!resolved.generator) {
         this.emit('error', new Error(name + ' generator is not registered'));
         next();
         return;
       }
 
+      var generator = resolved.generator;
+      var tasks = resolved.tasks;
+
       debug('generating: "%s"', tasks.join(', '));
       this.emit('generate', generator.alias, tasks, generator);
-      runGenerators(name, tasks, this, generator, next);
+      runGenerators(name, this, resolved, next);
     });
 
     /**
@@ -498,7 +574,12 @@ module.exports = function(config) {
      * @api public
      */
 
-    function runGenerators(name, tasks, app, generator, next) {
+    function runGenerators(name, app, resolved, next) {
+      var generator = resolved.generator;
+      var tasks = resolved.tasks;
+
+      generator.option(resolved.options || {});
+
       // if `base-config` is registered call `.process` first, then run tasks
       if (typeof generator.config !== 'undefined') {
         var config = app.get('cache.config') || {};
@@ -569,52 +650,6 @@ module.exports = function(config) {
         }
       }
     }
-
-    /**
-     * Iterate over an array of generators and tasks, calling [generate](#generate)
-     * on each.
-     *
-     * ```js
-     * // run tasks `a` and `b` on generator `foo`,
-     * // and tasks `c` and `d` on generator `bar`
-     * base.generateEach(['foo:a,b', 'bar:c,d'], function(err) {
-     *   if (err) throw err;
-     * });
-     * ```
-     * @name .generateEach
-     * @param {String|Array} `tasks` Array of generators and tasks to run.
-     * @param {Function} `cb` Callback function that exposes `err` as the only parameter.
-     * @api public
-     */
-
-    this.define('generateEach', function(tasks, cb) {
-      if (typeof tasks === 'function') {
-        cb = tasks;
-        tasks = ['default'];
-      }
-
-      if (typeof tasks === 'string') {
-        tasks = [tasks];
-      }
-
-      var len = tasks.length;
-      var idx = -1;
-      var arr = [];
-      var app = this;
-
-      while (++idx < len) {
-        var val = tasks[idx];
-        arr.push({name: val, resolved: app.resolveTasks(val)});
-        if (this._lookup) {
-          this.options.lookup = this._lookup;
-        }
-      }
-
-      async.eachSeries(arr, function(obj, next) {
-        obj.resolved.orig = tasks;
-        app.runTasks(obj.name, obj.resolved, next);
-      }, cb);
-    });
 
     /**
      * Create a generator alias from the given `name`. By default the alias
