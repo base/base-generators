@@ -8,7 +8,7 @@
 'use strict';
 
 var path = require('path');
-var async = require('async');
+var eachSeries = require('async-each-series');
 var debug = require('debug')('base:generators');
 var createApp = require('./lib/app');
 var tasks = require('./lib/tasks');
@@ -528,7 +528,7 @@ module.exports = function(config) {
         }
       }
 
-      async.eachSeries(arr, function(obj, next) {
+      eachSeries(arr, function(obj, next) {
         obj.resolved.orig = tasks;
         app.runTasks(obj.name, obj.resolved, next);
       }, cb);
