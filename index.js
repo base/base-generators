@@ -460,6 +460,14 @@ module.exports = function(config) {
       name = arr[0];
       tasks = arr[1] || [];
 
+      if (typeof name === 'string' && Array.isArray(tasks) && tasks.length) {
+        tasks = tasks.map(function(task) {
+          return name + ':' + task;
+        });
+        name = tasks;
+        tasks = [];
+      }
+
       if (Array.isArray(name) && tasks.length === 0) {
         this.generateEach(name, opts, cb);
         return;
@@ -498,19 +506,40 @@ module.exports = function(config) {
      * @api public
      */
 
-    this.define('generateEach', function(tasks, options, cb) {
-      if (typeof options === 'function') {
-        cb = options;
-        options = {};
+    this.define('generateEach', function(name, tasks, options, cb) {
+      var args = arguments;
+      var arr = [];
+      var opts = {};
+
+      for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        switch(utils.typeOf(arg)) {
+          case 'string':
+          case 'array':
+            arr.push(arg);
+            continue;
+          case 'object':
+            opts = arg;
+            continue;
+          case 'function':
+            cb = arg;
+            continue;
+        }
       }
 
-      if (typeof tasks === 'function') {
-        cb = tasks;
-        tasks = ['default'];
-      }
+      name = arr[0] || 'default';
+      tasks = arr[1] || [];
 
-      if (typeof tasks === 'string') {
-        tasks = [tasks];
+      if (typeof name === 'string' && tasks.length) {
+        tasks = tasks.map(function(task) {
+          return name + ':' + task;
+        });
+        name = tasks;
+        tasks = [];
+      } else if (Array.isArray(name)) {
+        tasks = name;
+      } else if (typeof name === 'string') {
+        tasks = [name];
       }
 
       var len = tasks.length;
@@ -521,7 +550,7 @@ module.exports = function(config) {
       while (++idx < len) {
         var val = tasks[idx];
         var resolved = app.resolveTasks(val);
-        resolved.options = options;
+        resolved.options = opts;
         arr.push({name: val, resolved: resolved});
         if (this._lookup) {
           this.options.lookup = this._lookup;
@@ -590,7 +619,7 @@ module.exports = function(config) {
 
       function runGenerator(err) {
         if (err) {
-          next(err);
+          done(err);
           return;
         }
         extendGenerator(app, generator);
@@ -599,6 +628,7 @@ module.exports = function(config) {
 
       function done(err) {
         if (err) {
+          err.resolved = resolved;
           utils.generatorError(err, app, name, next);
         } else {
           next();
@@ -695,7 +725,7 @@ function isValidInstance(app) {
   if (!app.isApp && !app.isGenerator) {
     return false;
   }
-  if (app.isRegistered('base-generators')) {
+  if (typeof app.isRegistered !== 'function' || app.isRegistered('base-generators')) {
     return false;
   }
   return true;
