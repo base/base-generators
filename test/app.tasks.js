@@ -5,6 +5,7 @@ var assert = require('assert');
 var isApp = require('./support/is-app');
 var Base = require('base');
 var tasks = require('../lib/tasks');
+var utils = require('../lib/utils');
 var generators = require('..');
 var base;
 
@@ -65,16 +66,16 @@ describe('tasks', function() {
 
   describe('.stringifyTasks', function() {
     it('should create a generator-task string', function() {
-      assert.equal(base.stringifyTasks('foo'), 'foo');
-      assert.equal(base.stringifyTasks('foo', function() {}), 'foo');
-      assert.equal(base.stringifyTasks('foo', []), 'foo');
-      assert.equal(base.stringifyTasks('foo:a,b,c'), 'foo:a,b,c');
-      assert.equal(base.stringifyTasks('foo.bar:a,b,c'), 'foo.bar:a,b,c');
-      assert.equal(base.stringifyTasks('foo.bar', 'a,b,c'), 'foo.bar:a,b,c');
-      assert.equal(base.stringifyTasks('foo', 'a,b,c'), 'foo:a,b,c');
-      assert.equal(base.stringifyTasks('foo', ['a', 'b', 'c']), 'foo:a,b,c');
-      assert.equal(base.stringifyTasks(['foo', 'bar'], ['a', 'b']), 'foo.bar:a,b');
-      assert.equal(base.stringifyTasks(['foo', 'bar'], 'a,b,c'), 'foo.bar:a,b,c');
+      assert.equal(utils.stringify('foo'), 'foo');
+      assert.equal(utils.stringify('foo', function() {}), 'foo');
+      assert.equal(utils.stringify('foo', []), 'foo');
+      assert.equal(utils.stringify('foo:a,b,c'), 'foo:a,b,c');
+      assert.equal(utils.stringify('foo.bar:a,b,c'), 'foo.bar:a,b,c');
+      assert.equal(utils.stringify('foo.bar', 'a,b,c'), 'foo.bar:a,b,c');
+      assert.equal(utils.stringify('foo', 'a,b,c'), 'foo:a,b,c');
+      assert.equal(utils.stringify('foo', ['a', 'b', 'c']), 'foo:a,b,c');
+      assert.equal(utils.stringify(['foo', 'bar'], ['a', 'b']), 'foo.bar:a,b');
+      assert.equal(utils.stringify(['foo', 'bar'], 'a,b,c'), 'foo.bar:a,b,c');
     });
   });
 });

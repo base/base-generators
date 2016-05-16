@@ -48,7 +48,7 @@ describe('.generate', function() {
       });
     });
 
-    it('should run handle config errors when the base-config plugin is used', function(cb) {
+    it('should handle config errors when the base-config plugin is used', function(cb) {
       base.use(config());
       var count = 0;
 
@@ -65,6 +65,7 @@ describe('.generate', function() {
       });
 
       base.generate('default', function(err) {
+        assert(err);
         assert.equal(err.message, 'fooo');
         assert.equal(count, 1);
         cb();
@@ -81,9 +82,18 @@ describe('.generate', function() {
       });
     });
 
-    it('should throw an error when a task is not found', function(cb) {
+    it('should throw an error when a task is not found (task string)', function(cb) {
       base.register('foo', function() {});
       base.generate('foo:bar', function(err) {
+        assert(err);
+        assert.equal('Cannot find task: "bar" in generator: "foo"', err.message);
+        cb();
+      });
+    });
+
+    it('should throw an error when a task is not found (task array)', function(cb) {
+      base.register('foo', function() {});
+      base.generate('foo', ['bar'], function(err) {
         assert(err);
         assert.equal('Cannot find task: "bar" in generator: "foo"', err.message);
         cb();
@@ -99,15 +109,13 @@ describe('.generate', function() {
     });
 
     it('should not throw an error when a default generator is not found', function(cb) {
-      base.register('foo', function() {});
       base.generate('default', function(err) {
         assert(!err);
         cb();
       });
     });
 
-    it('should not throw an error when a default generator is not found', function(cb) {
-      base.register('foo', function() {});
+    it('should not throw an error when a default task and default generator is not found', function(cb) {
       base.generate('default:default', function(err) {
         assert(!err);
         cb();
@@ -124,6 +132,15 @@ describe('.generate', function() {
       });
     });
 
+    it('should throw an error when a task is not found', function(cb) {
+      base.register('fdsslsllsfjssl', function() {});
+      base.generate('fdsslsllsfjssl:foo', function(err) {
+        assert(err);
+        assert.equal('Cannot find task: "foo" in generator: "fdsslsllsfjssl"', err.message);
+        cb();
+      });
+    });
+
     it('should not reformat error messages that are not about invalid tasks', function(cb) {
       base.task('default', function(cb) {
         cb(new Error('whatever'));
@@ -132,15 +149,6 @@ describe('.generate', function() {
       base.generate('default', function(err) {
         assert(err);
         assert.equal(err.message, 'whatever');
-        cb();
-      });
-    });
-
-    it('should throw an error when a task is not found', function(cb) {
-      base.register('fdsslsllsfjssl', function() {});
-      base.generate('fdsslsllsfjssl', ['foo'], function(err) {
-        assert(err);
-        assert.equal('Cannot find task: "foo" in generator: "fdsslsllsfjssl"', err.message);
         cb();
       });
     });
@@ -319,6 +327,113 @@ describe('.generate', function() {
       });
     });
 
+    it('should run the default task on a registered generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generate('foo', function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run an array of generators', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.register('bar', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generate(['foo', 'bar'], function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 2);
+        cb();
+      });
+    });
+
+    it('should run the default task on the default generator', function(cb) {
+      var count = 0;
+      base.register('default', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generate(function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run the specified task on a registered generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+
+        app.task('abc', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generate('foo:abc', function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run an array of tasks on a registered generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.task('default', function(next) {
+          count++;
+          next();
+        });
+
+        app.task('a', function(next) {
+          count++;
+          next();
+        });
+
+        app.task('b', function(next) {
+          count++;
+          next();
+        });
+
+        app.task('c', function(next) {
+          count++;
+          next();
+        });
+      });
+
+      base.generate('foo:a,b,c', function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 3);
+        cb();
+      });
+    });
+
     it('should run the default tasks on an array of generators', function(cb) {
       var count = 0;
       base.register('a', function(app) {
@@ -493,7 +608,7 @@ describe('.generate', function() {
     });
   });
 
-  describe('generate sub-generators', function(cb) {
+  describe('sub-generators', function(cb) {
     it('should run the default task on a registered sub-generator', function(cb) {
       var count = 0;
       base.register('foo', function(app) {
@@ -517,7 +632,30 @@ describe('.generate', function() {
       });
     });
 
-    it('should run the specified task on a registered sub-generator', function(cb) {
+    it('should run the specified task string on a registered sub-generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.register('sub', function(sub) {
+          sub.task('default', function(next) {
+            count++;
+            next();
+          });
+
+          sub.task('abc', function(next) {
+            count++;
+            next();
+          });
+        });
+      });
+
+      base.generate('foo.sub:abc', function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run the specified task array on a registered sub-generator', function(cb) {
       var count = 0;
       base.register('foo', function(app) {
         app.register('sub', function(sub) {
@@ -536,6 +674,39 @@ describe('.generate', function() {
       base.generate('foo.sub', ['abc'], function(err) {
         if (err) return cb(err);
         assert.equal(count, 1);
+        cb();
+      });
+    });
+
+    it('should run an of stringified-tasks on a registered sub-generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.register('bar', function(bar) {
+          bar.task('default', function(next) {
+            count++;
+            next();
+          });
+
+          bar.task('a', function(next) {
+            count++;
+            next();
+          });
+
+          bar.task('b', function(next) {
+            count++;
+            next();
+          });
+
+          bar.task('c', function(next) {
+            count++;
+            next();
+          });
+        });
+      });
+
+      base.generate('foo.bar:a,b,c', function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 3);
         cb();
       });
     });
@@ -605,6 +776,63 @@ describe('.generate', function() {
         cb();
       });
     });
+
+    it('should run an multiple tasks on a registered sub-generator', function(cb) {
+      var count = 0;
+      base.register('foo', function(app) {
+        app.register('bar', function(bar) {
+          bar.task('default', function(next) {
+            count++;
+            next();
+          });
+
+          bar.task('a', function(next) {
+            count++;
+            next();
+          });
+
+          bar.task('b', function(next) {
+            count++;
+            next();
+          });
+
+          bar.task('c', function(next) {
+            count++;
+            next();
+          });
+        });
+      });
+
+      base.register('qux', function(app) {
+        app.register('fez', function(fez) {
+          fez.task('default', function(next) {
+            count++;
+            next();
+          });
+
+          fez.task('a', function(next) {
+            count++;
+            next();
+          });
+
+          fez.task('b', function(next) {
+            count++;
+            next();
+          });
+
+          fez.task('c', function(next) {
+            count++;
+            next();
+          });
+        });
+      });
+
+      base.generate(['foo.bar:a,b,c', 'qux.fez:a,b,c'], function(err) {
+        if (err) return cb(err);
+        assert.equal(count, 6);
+        cb();
+      });
+    });
   });
 
   describe('cross-generator', function(cb) {
@@ -662,8 +890,10 @@ describe('.generate', function() {
 
   describe('events', function(cb) {
     it('should emit generate', function(cb) {
+      var count = 0;
+
       base.on('generate', function() {
-        cb();
+        count++;
       });
 
       base.register('foo', function(app) {
@@ -673,6 +903,7 @@ describe('.generate', function() {
           });
 
           sub.task('abc', function(next) {
+            count++;
             next();
           });
         });
@@ -680,6 +911,8 @@ describe('.generate', function() {
 
       base.generate('foo.sub', ['abc'], function(err) {
         if (err) return cb(err);
+        assert.equal(count, 2);
+        cb();
       });
     });
 

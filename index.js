@@ -41,7 +41,6 @@ module.exports = function(config) {
     this.use(utils.cwd());
     this.use(utils.pkg());
     this.use(utils.task());
-    this.use(utils.parse());
 
     this.use(utils.env());
     this.use(utils.compose());
@@ -176,10 +175,20 @@ module.exports = function(config) {
 
     this.define('getGenerator', function(name, options) {
       debug('getting generator "%s"', name);
+      if (name === 'this') {
+        return this;
+      }
+
+      if (Array.isArray(name)) {
+        name = name.join('.');
+      }
+
+      if (typeof name !== 'string') {
+        throw new TypeError('expected name to be a string');
+      }
 
       var opts = utils.merge({}, this.base.options, this.options, options);
       var generator = this.findGenerator(name, opts);
-
       if (generator && !generator.isInvoked) {
         generator.isInvoked = true;
 
@@ -217,8 +226,11 @@ module.exports = function(config) {
 
     this.define('findGenerator', function(name, opts) {
       debug('finding generator "%s"', name);
-      if (typeof name !== 'string') {
+      if (utils.isObject(name)) {
         return name;
+      }
+      if (typeof name !== 'string') {
+        throw new TypeError('expected name to be a string');
       }
 
       if (cache[name]) return cache[name];
@@ -439,12 +451,97 @@ module.exports = function(config) {
      */
 
     this.define('generate', function(name, tasks, options, cb) {
-      eachSeries(this.parseTasks(name, tasks), function(queued, next) {
-        composeGenerator(this, queued.generator);
-        queued.generator.build(queued.tasks, next);
+      if (typeof name === 'function') {
+        return this.generate('default', [], {}, name);
+      }
+      if (utils.isObject(name)) {
+        return this.generate('default', ['default'], name, tasks);
+      }
+      if (typeof tasks === 'function') {
+        return this.generate(name, [], {}, tasks);
+      }
+      if (typeof options === 'function') {
+        return this.generate(name, tasks, {}, options);
+      }
+
+      if (Array.isArray(name)) {
+        return eachSeries(name, function(val, next) {
+          this.generate(val, tasks, options, next);
+        }.bind(this), cb);
+      }
+
+      var queue = this.parseTasks(name, tasks);
+
+      eachSeries(queue, function(queued, next) {
+        if (cb.name === 'finishRun' && queued.tasks.indexOf(name) !== -1) {
+          queued.name = name;
+          queued.tasks = ['default'];
+        }
+
+        queued.generator = this.getGenerator(queued.name, options);
+        if (!utils.isGenerator(queued.generator)) {
+          if (queued.name === 'default') {
+            next();
+          } else {
+            var msg = utils.formatError('generator', app, queued.name);
+            next(new Error(msg));
+          }
+          return;
+        }
+        generate(this, queued, options, next);
       }.bind(this), cb);
       return;
     });
+
+    /**
+     * Run generators, calling `.config.process` first if it exists.
+     *
+     * @param {String|Array} `name` generator to run
+     * @param {Array|String} `tasks` tasks to run
+     * @param {Object} `app` Application instance
+     * @param {Object} `generator` generator instance
+     * @param {Function} next
+     * @api public
+     */
+
+    function generate(app, queued, options, next) {
+      var generator = queued.generator;
+      var tasks = queued.tasks;
+
+      generator.option(options || {});
+
+      var alias = generator.env ? generator.env.alias : generator._name;
+      app.emit('generate', alias, queued.tasks, generator);
+      if (app._lookup) {
+        app.options.lookup = app._lookup;
+      }
+
+      // if `base-config` is registered call `.process` first, then run tasks
+      if (typeof generator.config !== 'undefined') {
+        var config = app.get('cache.config') || {};
+        generator.config.process(config, runGenerator);
+      } else {
+        runGenerator();
+      }
+
+      function runGenerator(err) {
+        if (err) {
+          done(err);
+          return;
+        }
+        composeGenerator(app, generator);
+        generator.build(tasks, done);
+      }
+
+      function done(err) {
+        if (err) {
+          err.queue = queued;
+          utils.handleError(app, queued.name, next)(err);
+        } else {
+          next();
+        }
+      }
+    }
 
     /**
      * Extend the generator being invoked with settings from the instance,
