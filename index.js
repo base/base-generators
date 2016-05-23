@@ -8,7 +8,6 @@
 'use strict';
 
 var path = require('path');
-var eachSeries = require('async-each-series');
 var debug = require('debug')('base:generators');
 var createApp = require('./lib/app');
 var tasks = require('./lib/tasks');
@@ -23,7 +22,7 @@ module.exports = function(config) {
   config = config || {};
 
   return function plugin(app) {
-    if (!isValidInstance(this)) return;
+    if (!utils.isValid(this, 'base-generators')) return;
     debug('initializing <%s>, called from <%s>', __filename, module.parent.id);
 
     this.isApp = true;
@@ -187,8 +186,13 @@ module.exports = function(config) {
         throw new TypeError('expected name to be a string');
       }
 
+      if (this.has('cache.runnerContext') && !this.get('cache.hasDefault') && name === 'default') {
+        return null;
+      }
+
       var opts = utils.merge({}, this.base.options, this.options, options);
       var generator = this.findGenerator(name, opts);
+
       if (generator && !generator.isInvoked) {
         generator.isInvoked = true;
 
@@ -460,19 +464,26 @@ module.exports = function(config) {
       if (typeof tasks === 'function') {
         return this.generate(name, [], {}, tasks);
       }
+      if (utils.isObject(tasks)) {
+        return this.generate(name, [], tasks, options);
+      }
       if (typeof options === 'function') {
         return this.generate(name, tasks, {}, options);
       }
 
       if (Array.isArray(name)) {
-        return eachSeries(name, function(val, next) {
+        return utils.eachSeries(name, function(val, next) {
           this.generate(val, tasks, options, next);
         }.bind(this), cb);
       }
 
+      if (typeof cb !== 'function') {
+        throw new TypeError('expected a callback function');
+      }
+
       var queue = this.parseTasks(name, tasks);
 
-      eachSeries(queue, function(queued, next) {
+      utils.eachSeries(queue, function(queued, next) {
         if (cb.name === 'finishRun' && queued.tasks.indexOf(name) !== -1) {
           queued.name = name;
           queued.tasks = ['default'];
@@ -493,6 +504,11 @@ module.exports = function(config) {
       return;
     });
 
+    this.define('generateEach', function() {
+      console.log('.generateEach is deprecated. Use `.generate` instead.');
+      return this.generate.apply(this, arguments);
+    });
+
     /**
      * Run generators, calling `.config.process` first if it exists.
      *
@@ -501,12 +517,20 @@ module.exports = function(config) {
      * @param {Object} `app` Application instance
      * @param {Object} `generator` generator instance
      * @param {Function} next
-     * @api public
      */
 
     function generate(app, queued, options, next) {
       var generator = queued.generator;
       var tasks = queued.tasks;
+
+      composeGenerator(app, generator);
+
+      if (tasks.length === 1 && !generator.hasTask(tasks[0])) {
+        var suffix = queued.name !== 'this' ? ('" in generator: "' + queued.name + '"') : '';
+        console.error('Cannot find task: "' + tasks[0] + suffix);
+        next();
+        return;
+      }
 
       generator.option(options || {});
 
@@ -519,17 +543,13 @@ module.exports = function(config) {
       // if `base-config` is registered call `.process` first, then run tasks
       if (typeof generator.config !== 'undefined') {
         var config = app.get('cache.config') || {};
-        generator.config.process(config, runGenerator);
+        generator.config.process(config, build);
       } else {
-        runGenerator();
+        build();
       }
 
-      function runGenerator(err) {
-        if (err) {
-          done(err);
-          return;
-        }
-        composeGenerator(app, generator);
+      function build(err) {
+        if (err) return done(err);
         generator.build(tasks, done);
       }
 
@@ -547,7 +567,8 @@ module.exports = function(config) {
      * Extend the generator being invoked with settings from the instance,
      * but only if the generator is not the `default` generator.
      *
-     * Also, this does not extend tasks.
+     * Also, note that this **does not add tasks** from the `default` generator
+     * onto the instance.
      */
 
     function composeGenerator(app, generator, ctx) {
@@ -555,7 +576,7 @@ module.exports = function(config) {
       var alias = env.alias;
 
       // update `cache.config`
-      var config = utils.merge({}, ctx || app.pkg.get(app._name));
+      var config = utils.merge({}, ctx || app.cache.config || app.pkg.get(app._name));
       generator.set('cache.config', config);
 
       // set options
@@ -627,13 +648,3 @@ module.exports = function(config) {
     return plugin;
   };
 };
-
-function isValidInstance(app) {
-  if (!app.isApp && !app.isGenerator) {
-    return false;
-  }
-  if (typeof app.isRegistered !== 'function' || app.isRegistered('base-generators')) {
-    return false;
-  }
-  return true;
-}
