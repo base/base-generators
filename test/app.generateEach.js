@@ -82,24 +82,6 @@ describe('.generate', function() {
       });
     });
 
-    it('should throw an error when a task is not found (task string)', function(cb) {
-      base.register('foo', function() {});
-      base.generate('foo:bar', function(err) {
-        assert(err);
-        assert.equal('Cannot find task: "bar" in generator: "foo"', err.message);
-        cb();
-      });
-    });
-
-    it('should throw an error when a task is not found (task array)', function(cb) {
-      base.register('foo', function() {});
-      base.generate('foo', ['bar'], function(err) {
-        assert(err);
-        assert.equal('Cannot find task: "bar" in generator: "foo"', err.message);
-        cb();
-      });
-    });
-
     it('should *not* throw an error when the default task is not found', function(cb) {
       base.register('foo', function() {});
       base.generate('foo:default', function(err) {
@@ -128,15 +110,6 @@ describe('.generate', function() {
       base.generate('sflsjljskksl', function(err) {
         assert(err);
         assert.equal('Cannot find generator: "sflsjljskksl" in "foo/bar/baz"', err.message);
-        cb();
-      });
-    });
-
-    it('should throw an error when a task is not found', function(cb) {
-      base.register('fdsslsllsfjssl', function() {});
-      base.generate('fdsslsllsfjssl:foo', function(err) {
-        assert(err);
-        assert.equal('Cannot find task: "foo" in generator: "fdsslsllsfjssl"', err.message);
         cb();
       });
     });
