@@ -44,9 +44,6 @@ module.exports = function(config) {
     this.use(utils.env());
     this.use(utils.compose());
     this.use(tasks());
-
-    // ensure this plugin is registered on generators
-    this.fns.push(plugin);
     this.num = num++;
 
     // make sure constructor is non-enumerable
@@ -238,12 +235,13 @@ module.exports = function(config) {
       }
 
       if (cache[name]) return cache[name];
-      var app = this.generators[name] || this._findGenerator(name, opts);
+      var app = this.generators[name] || this.base.generators[name] || this._findGenerator(name, opts);
 
       // if no app, check the `base` instance
       if (typeof app === 'undefined' && this.hasOwnProperty('parent')) {
         app = this.base._findGenerator(name, opts);
       }
+
       // if no app, check `node_modules` or the file system
       if (!app && utils.exists(name)) {
         app = this.register(name, opts);
