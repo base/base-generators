@@ -145,6 +145,10 @@ module.exports = function(config) {
         generator = app;
       }
 
+      if (generator.env && generator.env.isDefault) {
+        this.generators._default = generator;
+      }
+
       // cache the generator
       this.generators[generator.alias] = generator;
       this.generators[generator.name] = generator;
@@ -230,6 +234,7 @@ module.exports = function(config) {
       if (utils.isObject(name)) {
         return name;
       }
+
       if (typeof name !== 'string') {
         throw new TypeError('expected name to be a string');
       }
@@ -488,6 +493,7 @@ module.exports = function(config) {
         }
 
         queued.generator = this.getGenerator(queued.name, options);
+
         if (!utils.isGenerator(queued.generator)) {
           if (queued.name === 'default') {
             next();
@@ -524,6 +530,10 @@ module.exports = function(config) {
       composeGenerator(app, generator);
 
       if (tasks.length === 1 && !generator.hasTask(tasks[0])) {
+        if (tasks[0] === 'default') {
+          next();
+          return;
+        }
         var suffix = queued.name !== 'this' ? ('" in generator: "' + queued.name + '"') : '';
         console.error('Cannot find task: "' + tasks[0] + suffix);
         next();
