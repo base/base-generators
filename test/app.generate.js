@@ -27,7 +27,7 @@ describe('.generate', function() {
         next();
       });
 
-      base.config.process({tasks: 'default'}, function(err) {
+      base.generate('default', function(err) {
         assert(!err);
         assert.equal(count, 1);
         cb();
@@ -42,7 +42,7 @@ describe('.generate', function() {
         next(new Error('fooo'));
       });
 
-      base.config.process({tasks: 'default'}, function(err) {
+      base.generate('default', function(err) {
         assert.equal(err.message, 'fooo');
         assert.equal(count, 1);
         cb();
@@ -59,13 +59,12 @@ describe('.generate', function() {
       });
 
       base.set('cache.config', {foo: true});
-
       base.task('default', function(next) {
         count--;
         next();
       });
 
-      base.config.process({tasks: 'default'}, function(err) {
+      base.generate('default', function(err) {
         assert(err);
         assert.equal(err.message, 'fooo');
         assert.equal(count, 1);

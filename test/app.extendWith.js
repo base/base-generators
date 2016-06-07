@@ -12,11 +12,23 @@ var option = require('base-option');
 var data = require('base-data');
 var gm = require('global-modules');
 var isApp = require('./support/is-app');
+var isAbsolute = require('is-absolute');
+var resolve = require('resolve');
 var Base = require('base');
 var generators = require('..');
 var base;
 
 var fixture = path.resolve.bind(path, __dirname, 'fixtures/generators');
+function resolver(search, app) {
+  try {
+    if (isAbsolute(search.name)) {
+      search.name = require.resolve(search.name);
+    } else {
+      search.name = resolve.sync(search.name, {basedir: gm});
+    }
+    search.app = app.register(search.name, search.name);
+  } catch (err) {}
+}
 
 describe('.extendWith', function() {
   before(function(cb) {
@@ -39,6 +51,8 @@ describe('.extendWith', function() {
     base.option('toAlias', function(name) {
       return name.replace(/^generate-/, '');
     });
+
+    base.on('unresolved', resolver);
   });
 
   it('should throw an error when a generator is not found', function(cb) {
@@ -50,7 +64,7 @@ describe('.extendWith', function() {
       base.getGenerator('foo');
       cb(new Error('expected an error'));
     } catch (err) {
-      assert.equal(err.message, `cannot resolve: 'fofoofofofofof'`);
+      assert.equal(err.message, 'cannot find generator: "fofoofofofofof"');
       cb();
     }
   });
@@ -306,6 +320,8 @@ describe('.extendWith', function() {
       app.use(plugins());
       app.use(option());
       app.use(generators());
+
+      app.on('unresolved', resolver);
       app.option('toAlias', function(name) {
         return name.replace(/^generate-/, '');
       });
@@ -325,6 +341,7 @@ describe('.extendWith', function() {
       app.use(plugins());
       app.use(option());
       app.use(generators());
+
       app.option('toAlias', function(name) {
         return name.replace(/^generate-/, '');
       });

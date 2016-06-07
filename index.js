@@ -164,7 +164,7 @@ module.exports = function(config) {
      * @api public
      */
 
-    this.define('findGenerator', function(name, opts) {
+    this.define('findGenerator', function(name, options) {
       debug('finding generator "%s"', name);
       if (utils.isObject(name)) {
         return name;
@@ -179,16 +179,23 @@ module.exports = function(config) {
       }
 
       if (cache[name]) return cache[name];
-      var app = this._findGenerator(name, opts);
+      var app = this._findGenerator(name, options);
 
       // if no app, check the `base` instance
       if (typeof app === 'undefined' && this.hasOwnProperty('parent')) {
-        app = this.base._findGenerator(name, opts);
+        app = this.base._findGenerator(name, options);
       }
 
       if (app) {
         cache[name] = app;
         return app;
+      }
+
+      var search = {name, options};
+      this.base.emit('unresolved', search, this);
+      if (search.app) {
+        cache[search.app.name] = search.app;
+        return search.app;
       }
     });
 
@@ -351,18 +358,8 @@ module.exports = function(config) {
       }
 
       var app = this.generators[name] || this.findGenerator(name, options);
-      if (typeof app === 'undefined' && !cache[name]) {
-        cache[name] = true;
-        var env = this.createEnv(name, name, options);
-        if (env && this.generators.hasOwnProperty(env.name)) {
-          app = this.generators[name];
-        } else if (env) {
-          app = this.register(name, require(env.path));
-        }
-      }
-
       if (!utils.isApp(app, 'Generator')) {
-        throw new Error('cannot find generator ' + name);
+        throw new Error('cannot find generator: "' + name + '"');
       }
 
       var alias = app.env ? app.env.alias : 'default';
@@ -441,22 +438,22 @@ module.exports = function(config) {
           return;
         }
 
-        if (cb.name === 'finishRun' && queued.tasks.indexOf(name) !== -1) {
+        if (cb.name === 'finishRun' && typeof name === 'string' && queued.tasks.indexOf(name) !== -1) {
           queued.name = name;
           queued.tasks = ['default'];
         }
 
-        queued.generator = this.getGenerator(queued.name, options);
+        queued.generator = queued.app || this.getGenerator(queued.name, options);
 
         if (!utils.isGenerator(queued.generator)) {
           if (queued.name === 'default') {
             next();
-          } else {
-            var msg = utils.formatError('generator', app, queued.name);
-            next(new Error(msg));
+            return;
           }
+          next(new Error(utils.formatError('generator', app, queued.name)));
           return;
         }
+
         generate(this, queued, options, next);
       }.bind(this), cb);
       return;

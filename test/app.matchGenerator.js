@@ -14,11 +14,11 @@ var base;
 describe('.matchGenerator', function() {
   before(function(cb) {
     if (!exists(path.resolve(__dirname, '../node_modules/generate-foo'))) {
-    spawn('npm', ['install', '--global', 'generate-foo'], {stdio: 'inherit'})
-      .on('error', cb)
-      .on('close', function(code, err) {
-        cb(err, code);
-      });
+      spawn('npm', ['install', '--global', 'generate-foo'], {stdio: 'inherit'})
+        .on('error', cb)
+        .on('close', function(code, err) {
+          cb(err, code);
+        });
     } else {
       cb();
     }

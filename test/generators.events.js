@@ -125,7 +125,7 @@ describe('generators events', function() {
       base = new Base();
       var called = 0;
 
-      function count(err) {
+      function count() {
         called++;
       }
 

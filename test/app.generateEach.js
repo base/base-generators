@@ -4,7 +4,7 @@ require('mocha');
 var assert = require('assert');
 var isApp = require('./support/is-app');
 var Base = require('base');
-var config = require('base-config');
+var config = require('base-config-process');
 var option = require('base-option');
 var generators = require('..');
 Base.use(isApp());
