@@ -254,17 +254,18 @@ describe('.generator', function() {
     });
 
     it('should create sub-generator namespace from parent namespace and alias', function(cb) {
+      var name = base._name;
       base.generator('generate-foo', function(app) {
-        assert.equal(app.namespace, 'base.foo');
+        assert.equal(app.namespace, name + '.foo');
 
         app.generator('generate-bar', function(bar) {
-          assert.equal(bar.namespace, 'base.foo.bar');
+          assert.equal(bar.namespace, name + '.foo.bar');
 
           bar.generator('generate-baz', function(baz) {
-            assert.equal(baz.namespace, 'base.foo.bar.baz');
+            assert.equal(baz.namespace, name + '.foo.bar.baz');
 
             baz.generator('generate-qux', function(qux) {
-              assert.equal(qux.namespace, 'base.foo.bar.baz.qux');
+              assert.equal(qux.namespace, name + '.foo.bar.baz.qux');
               cb();
             });
           });

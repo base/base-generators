@@ -179,7 +179,9 @@ module.exports = function(config) {
       }
 
       if (cache[name]) return cache[name];
-      var app = this._findGenerator(name, options);
+      var app = this.generators[name]
+        || this.base.generators[name]
+        || this._findGenerator(name, options);
 
       // if no app, check the `base` instance
       if (typeof app === 'undefined' && this.hasOwnProperty('parent')) {
@@ -187,6 +189,8 @@ module.exports = function(config) {
       }
 
       if (app) {
+        cache[app.name] = app;
+        cache[app.alias] = app;
         cache[name] = app;
         return app;
       }
@@ -195,6 +199,7 @@ module.exports = function(config) {
       this.base.emit('unresolved', search, this);
       if (search.app) {
         cache[search.app.name] = search.app;
+        cache[search.app.alias] = search.app;
         return search.app;
       }
     });
