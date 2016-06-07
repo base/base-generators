@@ -2,8 +2,8 @@
 
 var generators = require('../..');
 var Base = require('base');
-Base.use(generators(Base));
-var base = new Base();
+var base = new Base({isApp: true});
+base.use(generators());
 
 base.register('not-exposed', function(app) {
 

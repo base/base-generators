@@ -7,11 +7,11 @@ var Base = require('base');
 var config = require('base-config');
 var option = require('base-option');
 var generators = require('..');
+Base.use(isApp());
 var base;
 
 describe('.generate', function() {
   beforeEach(function() {
-    Base.use(isApp());
     base = new Base();
     base.use(generators());
     base.use(option());

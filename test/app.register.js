@@ -4,19 +4,17 @@ require('mocha');
 var path = require('path');
 var assert = require('assert');
 var option = require('base-option');
-var isApp = require('./support/is-app');
+var Base = require('./support/app');
 var generators = require('..');
-var Base = require('base');
 var base;
 
 var fixtures = path.resolve.bind(path, __dirname + '/fixtures');
 
 describe('.register', function() {
   beforeEach(function() {
-    Base.use(isApp());
     base = new Base();
-    base.use(generators());
     base.use(option());
+    base.use(generators());
   });
 
   describe('function', function() {
@@ -37,7 +35,7 @@ describe('.register', function() {
       assert(generator.tasks.hasOwnProperty('default'));
     });
 
-    it('should get a sub-generator from a generator registered as a function', function() {
+    it('should get a generator from a generator registered as a function', function() {
       base.register('foo', function(foo) {
         foo.register('bar', function(bar) {});
       });
@@ -172,8 +170,7 @@ describe('.register', function() {
         base.register('not-exposed', require(fixtures('not-exposed.js')));
         cb(new Error('expected an error'));
       } catch (err) {
-        var fp = path.resolve(__dirname, '../node_modules/not-exposed/generator.js');
-        assert.equal(err.message, 'Cannot find module \'' + fp + '\'');
+        assert.equal(err.message, `cannot resolve: 'not-exposed'`);
         cb();
       }
     });
@@ -215,6 +212,7 @@ describe('.register', function() {
 
     it('should get sub-generators from a generator registered as an instance', function() {
       var foo = new Base();
+      foo.use(generators());
       foo.register('bar', function() {});
       base.register('foo', foo);
       var generator = base.getGenerator('foo.bar');
@@ -223,6 +221,7 @@ describe('.register', function() {
 
     it('should get tasks from sub-generators registered as an instance', function() {
       var foo = new Base();
+      foo.use(generators());
 
       foo.options.isFoo = true;
       foo.register('bar', function(bar) {

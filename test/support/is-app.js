@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function() {
-  return function(proto) {
-    proto.isApp = true;
+  return function() {
+    this.isApp = true;
   };
 };

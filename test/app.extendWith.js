@@ -5,8 +5,10 @@ require('generate-foo/generator.js');
 
 var path = require('path');
 var assert = require('assert');
-var commands = require('spawn-commands');
+var npm = require('npm-install-global');
 var utils = require('generator-util');
+var plugins = require('base-plugins');
+var option = require('base-option');
 var data = require('base-data');
 var gm = require('global-modules');
 var isApp = require('./support/is-app');
@@ -16,17 +18,10 @@ var base;
 
 var fixture = path.resolve.bind(path, __dirname, 'fixtures/generators');
 
-function install(name, cb) {
-  commands({
-    args: ['install', '-g', '--silent', name],
-    cmd: 'npm'
-  }, cb);
-}
-
 describe('.extendWith', function() {
   before(function(cb) {
     if (!utils.exists(path.resolve(gm, 'generate-bar'))) {
-      install('generate-bar', cb);
+      npm.install('generate-bar', cb);
     } else {
       cb();
     }
@@ -36,8 +31,11 @@ describe('.extendWith', function() {
     Base.use(isApp());
 
     base = new Base();
+    base.use(plugins());
+    base.use(option());
     base.use(data());
     base.use(generators());
+
     base.option('toAlias', function(name) {
       return name.replace(/^generate-/, '');
     });
@@ -52,7 +50,7 @@ describe('.extendWith', function() {
       base.getGenerator('foo');
       cb(new Error('expected an error'));
     } catch (err) {
-      assert.equal(err.message, 'cannot find generator fofoofofofofof');
+      assert.equal(err.message, `cannot resolve: 'fofoofofofofof'`);
       cb();
     }
   });
@@ -305,6 +303,8 @@ describe('.extendWith', function() {
 
     it('should extend with a generator invoked from node_modules by name on a default instance', function() {
       var app = new Base();
+      app.use(plugins());
+      app.use(option());
       app.use(generators());
       app.option('toAlias', function(name) {
         return name.replace(/^generate-/, '');
@@ -315,6 +315,25 @@ describe('.extendWith', function() {
       assert(!app.tasks.c);
 
       app.extendWith('generate-foo');
+      assert(app.tasks.a);
+      assert(app.tasks.b);
+      assert(app.tasks.c);
+    });
+
+    it('should use a generator from node_modules as a plugin', function() {
+      var app = new Base();
+      app.use(plugins());
+      app.use(option());
+      app.use(generators());
+      app.option('toAlias', function(name) {
+        return name.replace(/^generate-/, '');
+      });
+
+      assert(!app.tasks.a);
+      assert(!app.tasks.b);
+      assert(!app.tasks.c);
+
+      app.use(require('generate-foo'));
       assert(app.tasks.a);
       assert(app.tasks.b);
       assert(app.tasks.c);

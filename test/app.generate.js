@@ -4,7 +4,7 @@ require('mocha');
 var assert = require('assert');
 var isApp = require('./support/is-app');
 var Base = require('base');
-var config = require('base-config');
+var config = require('base-config-process');
 var option = require('base-option');
 var generators = require('..');
 var base;
@@ -20,20 +20,21 @@ describe('.generate', function() {
   describe('config.process', function(cb) {
     it('should run tasks when the base-config plugin is used', function(cb) {
       base.use(config());
+
       var count = 0;
       base.task('default', function(next) {
         count++;
         next();
       });
 
-      base.generate('default', function(err) {
+      base.config.process({tasks: 'default'}, function(err) {
         assert(!err);
         assert.equal(count, 1);
         cb();
       });
     });
 
-    it('should run handle errors when the base-config plugin is used', function(cb) {
+    it('should handle errors when the base-config plugin is used', function(cb) {
       base.use(config());
       var count = 0;
       base.task('default', function(next) {
@@ -41,7 +42,7 @@ describe('.generate', function() {
         next(new Error('fooo'));
       });
 
-      base.generate('default', function(err) {
+      base.config.process({tasks: 'default'}, function(err) {
         assert.equal(err.message, 'fooo');
         assert.equal(count, 1);
         cb();
@@ -64,7 +65,7 @@ describe('.generate', function() {
         next();
       });
 
-      base.generate('default', function(err) {
+      base.config.process({tasks: 'default'}, function(err) {
         assert(err);
         assert.equal(err.message, 'fooo');
         assert.equal(count, 1);

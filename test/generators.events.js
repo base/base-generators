@@ -18,8 +18,8 @@ describe('generators events', function() {
 
     it('should emit generator when a generator is registered', function(cb) {
       base = new Base();
-      base.on('generator', function(alias, generator) {
-        assert.equal(alias, 'foo');
+      base.on('generator', function(generator) {
+        assert.equal(generator.alias, 'foo');
         cb();
       });
 
@@ -29,8 +29,8 @@ describe('generators events', function() {
     it('should emit generator when base.generators.get is called', function(cb) {
       base = new Base();
 
-      base.on('generator', function(alias, generator) {
-        assert.equal(alias, 'foo');
+      base.on('generator', function(generator) {
+        assert.equal(generator.alias, 'foo');
         cb();
       });
 
@@ -40,8 +40,8 @@ describe('generators events', function() {
 
     it('should emit generator.get when base.generators.get is called', function(cb) {
       base = new Base();
-      base.on('generator', function(alias, generator) {
-        assert.equal(alias, 'foo');
+      base.on('generator', function(generator) {
+        assert.equal(generator.alias, 'foo');
         cb();
       });
 
@@ -125,7 +125,7 @@ describe('generators events', function() {
       base = new Base();
       var called = 0;
 
-      function count() {
+      function count(err) {
         called++;
       }
 
@@ -157,7 +157,7 @@ describe('generators events', function() {
       base.getGenerator('a.b.c.d')
         .build(function(err) {
           assert(err);
-          assert.equal(called, 5);
+          assert.equal(called, 6);
           assert.equal(err.message, 'whatever');
           cb();
         });
