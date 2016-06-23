@@ -24,7 +24,7 @@ module.exports = function(config) {
   config = config || {};
 
   return function plugin(app) {
-    if (!utils.isValid(app)) return;
+    if (!utils.isValid(app, 'base-generators')) return;
 
     var cache = {};
     this.generators = {};
@@ -363,7 +363,7 @@ module.exports = function(config) {
       }
 
       var app = this.generators[name] || this.findGenerator(name, options);
-      if (!utils.isApp(app, 'Generator')) {
+      if (!utils.isValidInstance(app)) {
         throw new Error('cannot find generator: "' + name + '"');
       }
 
@@ -407,6 +407,8 @@ module.exports = function(config) {
      */
 
     this.define('generate', function(name, tasks, options, cb) {
+      var self = this;
+
       if (typeof name === 'function') {
         return this.generate('default', [], {}, name);
       }
@@ -425,8 +427,8 @@ module.exports = function(config) {
 
       if (Array.isArray(name)) {
         return utils.eachSeries(name, function(val, next) {
-          this.generate(val, tasks, options, next);
-        }.bind(this), cb);
+          self.generate(val, tasks, options, next);
+        }, cb);
       }
 
       if (typeof cb !== 'function') {
@@ -437,7 +439,10 @@ module.exports = function(config) {
 
       utils.eachSeries(queue, function(queued, next) {
         if (queued._ && queued._.length) {
-          if (queued._[0] === 'default') return next();
+          if (queued._[0] === 'default') {
+            next();
+            return;
+          }
           var msg = utils.formatError('generator', app, queued._);
           next(new Error(msg));
           return;

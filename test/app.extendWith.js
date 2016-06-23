@@ -20,13 +20,21 @@ var base;
 
 var fixture = path.resolve.bind(path, __dirname, 'fixtures/generators');
 function resolver(search, app) {
+  var name = search.name;
+
   try {
     if (isAbsolute(search.name)) {
-      search.name = require.resolve(search.name);
+      name = require.resolve(search.name);
     } else {
-      search.name = resolve.sync(search.name, {basedir: gm});
+      name = resolve.sync(search.name);
     }
-    search.app = app.register(search.name, search.name);
+    search.app = app.register(name, name);
+    return search;
+  } catch (err) {}
+
+  try {
+    name = resolve.sync(search.name, {basedir: gm});
+    search.app = app.register(name, name);
   } catch (err) {}
 }
 
@@ -61,7 +69,7 @@ describe('.extendWith', function() {
         app.extendWith('fofoofofofofof');
       });
 
-      base.getGenerator('foo');
+      var foo = base.getGenerator('foo.fofoofofofofof');
       cb(new Error('expected an error'));
     } catch (err) {
       assert.equal(err.message, 'cannot find generator: "fofoofofofofof"');
@@ -300,6 +308,8 @@ describe('.extendWith', function() {
     });
 
     it('should extend with a generator invoked from node_modules by name', function(cb) {
+      base.register('generate-foo', require('generate-foo'));
+
       base.register('abc', function(app) {
         assert(!app.tasks.a);
         assert(!app.tasks.b);
