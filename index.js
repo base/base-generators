@@ -52,6 +52,7 @@ module.exports = function(config) {
      */
 
     this.define('register', function(name, options, generator) {
+      debug('.register', name);
       return this.setGenerator.apply(this, arguments);
     });
 
@@ -77,11 +78,10 @@ module.exports = function(config) {
      */
 
     this.define('generator', function(name, val, options) {
-      if (arguments.length === 1 && typeof name === 'string') {
-        var generator = this.getGenerator(name);
-        if (generator) {
-          return generator;
-        }
+      debug('.generator', name, val);
+
+      if (isSet(val)) {
+        return this.generators[name] || this.base.generators[name];
       }
 
       this.setGenerator.apply(this, arguments);
@@ -109,7 +109,16 @@ module.exports = function(config) {
      */
 
     this.define('setGenerator', function(name, val, options) {
-      debug('setting generator "%s"', name);
+      debug('.setGenerator', name);
+
+      if (isSet(val)) {
+        return this.generators[name] || this.base.generators[name];
+      }
+      console.log(name)
+
+      if (val && (typeof val === 'object' || typeof val === 'function')) {
+        utils.define(val, '_setGenerator', true);
+      }
 
       // ensure local sub-generator paths are resolved
       if (typeof val === 'string' && val.charAt(0) === '.' && this.env) {
@@ -135,14 +144,15 @@ module.exports = function(config) {
      */
 
     this.define('getGenerator', function(name, options) {
-      debug('getting generator "%s"', name);
+      debug('.getGenerator', name);
+
       if (name === 'this') {
         return this;
       }
 
-      var generator = this.findGenerator(name, options);
-      if (utils.isValidInstance(generator)) {
-        return generator.invoke(generator, options);
+      var gen = this.findGenerator(name, options);
+      if (utils.isValidInstance(gen)) {
+        return gen.invoke(gen, options);
       }
     });
 
@@ -164,8 +174,9 @@ module.exports = function(config) {
      * @api public
      */
 
-    this.define('findGenerator', function(name, options) {
-      debug('finding generator "%s"', name);
+    this.define('findGenerator', function fn(name, options) {
+      debug('.findGenerator', name);
+
       if (utils.isObject(name)) {
         return name;
       }
@@ -178,7 +189,10 @@ module.exports = function(config) {
         throw new TypeError('expected name to be a string');
       }
 
-      if (cache[name]) return cache[name];
+      if (cache.hasOwnProperty(name)) {
+        return cache[name];
+      }
+
       var app = this.generators[name]
         || this.base.generators[name]
         || this._findGenerator(name, options);
@@ -202,6 +216,8 @@ module.exports = function(config) {
         cache[search.app.alias] = search.app;
         return search.app;
       }
+
+      cache[name] = null;
     });
 
     /**
@@ -240,7 +256,7 @@ module.exports = function(config) {
      */
 
     this.define('getSubGenerator', function(name, options) {
-      debug('getting sub-generator "%s"', name);
+      debug('.getSubGenerator', name);
       var segs = name.split('.');
       var len = segs.length;
       var idx = -1;
@@ -266,7 +282,7 @@ module.exports = function(config) {
      */
 
     this.define('matchGenerator', function(name) {
-      debug('matching generator "%s"', name);
+      debug('.matchGenerator', name);
       for (var key in this.generators) {
         var generator = this.generators[key];
         if (generator.isMatch(name)) {
@@ -294,6 +310,7 @@ module.exports = function(config) {
      */
 
     this.define('lookupGenerator', function(name, options, fn) {
+      debug('.lookupGenerator', name);
       if (typeof options === 'function') {
         fn = options;
         options = {};
@@ -519,3 +536,7 @@ module.exports = function(config) {
     return plugin;
   };
 };
+
+function isSet(val) {
+  return val && (typeof val === 'object' || typeof val === 'function') && val._setGenerator;
+}
