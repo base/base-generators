@@ -114,7 +114,6 @@ module.exports = function(config) {
       if (isSet(val)) {
         return this.generators[name] || this.base.generators[name];
       }
-      console.log(name)
 
       if (val && (typeof val === 'object' || typeof val === 'function')) {
         utils.define(val, '_setGenerator', true);
