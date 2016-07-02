@@ -119,7 +119,11 @@
       "bach",
       "composer",
       "gulp",
-      "verb"
+      "verb",
+      "verb-readme-generator",
+      "generate",
+      "assemble",
+      "update"
     ]
   }
 }
