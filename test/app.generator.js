@@ -27,7 +27,6 @@ describe('.generator', function() {
     it('should get a generator by alias', function() {
       base.register('generate-foo', require('generate-foo'));
       var gen = base.getGenerator('foo');
-      console.log(base.generators)
       assert(gen);
       assert.equal(gen.env.name, 'generate-foo');
       assert.equal(gen.env.alias, 'foo');
