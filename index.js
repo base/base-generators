@@ -26,9 +26,9 @@ module.exports = function(config) {
   return function plugin(app) {
     if (!utils.isValid(app, 'base-generators')) return;
 
-    var cache = {};
-    this.generators = {};
     this.isGenerator = true;
+    this.generators = {};
+    var cache = {};
 
     this.define('constructor', this.constructor);
     this.use(plugins());
@@ -52,7 +52,6 @@ module.exports = function(config) {
      */
 
     this.define('register', function(name, options, generator) {
-      debug('.register', name);
       return this.setGenerator.apply(this, arguments);
     });
 
@@ -80,8 +79,8 @@ module.exports = function(config) {
     this.define('generator', function(name, val, options) {
       debug('.generator', name, val);
 
-      if (isSet(val)) {
-        return this.generators[name] || this.base.generators[name];
+      if (this.hasGenerator(name, val)) {
+        return this.findGenerator(name);
       }
 
       this.setGenerator.apply(this, arguments);
@@ -111,24 +110,22 @@ module.exports = function(config) {
     this.define('setGenerator', function(name, val, options) {
       debug('.setGenerator', name);
 
-      if (isSet(val)) {
-        return this.generators[name] || this.base.generators[name];
-      }
-
-      if (val && (typeof val === 'object' || typeof val === 'function')) {
-        utils.define(val, '_setGenerator', true);
+      if (this.hasGenerator(name, val)) {
+        return this.findGenerator(name);
       }
 
       // ensure local sub-generator paths are resolved
       if (typeof val === 'string' && val.charAt(0) === '.' && this.env) {
         val = path.resolve(this.env.dirname, val);
       }
+
       return generator(name, val, options, this);
     });
 
     /**
-     * Get generator `name` from `app.generators` and invoke it with the current instance.
-     * Dot-notation may be used to get a sub-generator.
+     * Get generator `name` from `app.generators`, same as [findGenerator], but also invokes
+     * the returned generator with the current instance. Dot-notation may be used for getting
+     * sub-generators.
      *
      * ```js
      * var foo = app.getGenerator('foo');
@@ -291,6 +288,22 @@ module.exports = function(config) {
     });
 
     /**
+     * Returns true if the given generator `name` or `val` is already registered.
+     *
+     * ```js
+     * console.log(app.hasGenerator('foo'));
+     * ```
+     * @param {String} `name`
+     * @param {Object|Function} `val`
+     * @return {Boolean}
+     * @api public
+     */
+
+    this.define('hasGenerator', function(name, val) {
+      return isSet(val) || this.generators.hasOwnProperty(name) || this.base.generators[name];
+    });
+
+    /**
      * Tries to find a registered generator that matches `name`
      * by iterating over the `generators` object, and doing a strict
      * comparison of each name returned by the given lookup `fn`.
@@ -378,7 +391,17 @@ module.exports = function(config) {
         return this;
       }
 
-      var app = this.generators[name] || this.findGenerator(name, options);
+      var app = name;
+      if (typeof name === 'string') {
+        app = this.generators[name] || this.findGenerator(name, options);
+        if (!app && utils.exists(name)) {
+          var fn = utils.tryRequire(name, this.cwd);
+          if (typeof fn === 'function') {
+            app = this.register(name, fn);
+          }
+        }
+      }
+
       if (!utils.isValidInstance(app)) {
         throw new Error('cannot find generator: "' + name + '"');
       }
