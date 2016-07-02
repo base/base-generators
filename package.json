@@ -12,7 +12,8 @@
   "files": [
     "index.js",
     "lib",
-    "utils.js"
+    "LICENSE",
+    "README.md"
   ],
   "main": "index.js",
   "engines": {
@@ -63,12 +64,26 @@
     "resolve": "^1.1.7"
   },
   "keywords": [
+    "api",
+    "app",
+    "application",
+    "base",
+    "baseplugin",
     "boilerplate",
+    "building-blocks",
+    "create",
+    "framework",
     "generate",
     "generator",
+    "generators",
     "init",
+    "plugin",
+    "plugins",
     "project",
     "scaffold",
+    "tool",
+    "toolkit",
+    "tools",
     "yeoman",
     "yo"
   ],
