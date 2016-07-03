@@ -565,6 +565,3 @@ module.exports = function(config) {
   };
 };
 
-function isSet(val) {
-  return val && (typeof val === 'object' || typeof val === 'function') && val._setGenerator;
-}
