@@ -25,10 +25,10 @@
   "dependencies": {
     "async-each-series": "^1.1.0",
     "base-compose": "^0.2.1",
-    "base-cwd": "^0.2.1",
-    "base-data": "^0.5.0",
+    "base-cwd": "^0.3.1",
+    "base-data": "^0.6.0",
     "base-env": "^0.3.0",
-    "base-option": "^0.8.3",
+    "base-option": "^0.8.4",
     "base-pkg": "^0.2.4",
     "base-plugins": "^0.4.13",
     "base-task": "^0.6.1",
