@@ -965,4 +965,64 @@ describe('.generate', function() {
       });
     });
   });
+
+  describe('results', function() {
+    it('should return results from `build`', function(cb) {
+      base.task('foo', function(cb) {
+        cb(null, 'foo');
+      });
+
+      base.build('foo', function(err, results) {
+        if (err) return cb(err);
+        assert.deepEqual(results, 'foo');
+        cb();
+      });
+    });
+
+    it('should return results from `generate`', function(cb) {
+      base.task('foo', function(cb) {
+        cb(null, 'foo');
+      });
+
+      base.generate('foo', function(err, results) {
+        if (err) return cb(err);
+        assert.deepEqual(results, ['foo']);
+        cb();
+      });
+    });
+
+    it('should return results from multiple tasks', function(cb) {
+      base.task('foo', function(cb) {
+        cb(null, 'foo');
+      });
+
+      base.task('bar', function(cb) {
+        cb(null, 'bar');
+      });
+
+      base.generate(['foo', 'bar'], function(err, results) {
+        if (err) return cb(err);
+        assert.deepEqual(results, ['foo', 'bar']);
+        cb();
+      });
+    });
+
+    it('should return results from sub generators', function(cb) {
+      base.register('foo', function(app) {
+        app.task('foo', function(cb) {
+          cb(null, 'foo');
+        });
+
+        app.task('bar', function(cb) {
+          cb(null, 'bar');
+        });
+      });
+
+      base.generate(['foo:foo', 'foo:bar'], function(err, results) {
+        if (err) return cb(err);
+        assert.deepEqual(results, ['foo', 'bar']);
+        cb();
+      });
+    });
+  });
 });
