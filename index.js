@@ -469,10 +469,18 @@ module.exports = function(config) {
           return this.generate(name, tasks, {}, options);
         }
 
+        var results = [];
         if (Array.isArray(name)) {
           return utils.eachSeries(name, function(val, next) {
-            self.generate(val, tasks, options, next);
-          }, cb);
+            self.generate(val, tasks, options, function(err, result) {
+              if (err) return next(err);
+              results = results.concat(result);
+              next(null, result);
+            });
+          }, function(err) {
+            if (err) return cb(err);
+            cb(null, results);
+          });
         }
 
         if (typeof cb !== 'function') {
@@ -508,8 +516,15 @@ module.exports = function(config) {
             return;
           }
 
-          generate(this, queued, options, next);
-        }.bind(this), cb);
+          generate(this, queued, options, function(err, result) {
+            if (err) return next(err);
+            results = results.concat(result);
+            next(null, result);
+          });
+        }.bind(this), function(err) {
+          if (err) return cb(err);
+          cb(null, results);
+        });
         return;
       },
 
